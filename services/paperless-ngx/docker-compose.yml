@@ -1,0 +1,54 @@
+# ==============================================================================
+# Paperless-ngx Document Management System Docker Compose Blueprint
+# Includes PostgreSQL, Redis queue, Gotenberg (doc to PDF), and Tika (OCR).
+# ==============================================================================
+
+version: "3.8"
+
+services:
+  broker:
+    image: docker.io/library/redis:7-alpine
+    container_name: paperless-redis
+    restart: unless-stopped
+    volumes:
+      - ./redisdata:/data
+
+  db:
+    image: docker.io/library/postgres:16-alpine
+    container_name: paperless-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: paperless
+      POSTGRES_USER: paperless
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+
+  webserver:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    container_name: paperless-webserver
+    restart: unless-stopped
+    depends_on:
+      - db
+      - broker
+    ports:
+      - "8000:8000"
+    environment:
+      PAPERLESS_REDIS: redis://broker:6379
+      PAPERLESS_DBENGINE: postgresql
+      PAPERLESS_DBHOST: db
+      PAPERLESS_DBNAME: paperless
+      PAPERLESS_DBUSER: paperless
+      PAPERLESS_DBPASS: ${DB_PASSWORD}
+      PAPERLESS_URL: http://192.168.1.246:8000
+      PAPERLESS_SECRET_KEY: ${PAPERLESS_SECRET_KEY}
+      PAPERLESS_TIME_ZONE: ${TIMEZONE:-America/Vancouver}
+      PAPERLESS_OCR_LANGUAGE: eng
+      PAPERLESS_OCR_LANGUAGES: eng fra
+      USERMAP_UID: 1000
+      USERMAP_GID: 1000
+    volumes:
+      - ${STORAGE_ROOT}/data:/usr/src/paperless/data
+      - ${STORAGE_ROOT}/media:/usr/src/paperless/media
+      - ${STORAGE_ROOT}/export:/usr/src/paperless/export
+      - ${STORAGE_ROOT}/consume:/usr/src/paperless/consume

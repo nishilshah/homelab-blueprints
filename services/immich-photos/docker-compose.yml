@@ -1,0 +1,51 @@
+# ==============================================================================
+# Immich Photo & Video Cloud Docker Compose Blueprint
+# Includes PostgreSQL with pgvector, Redis queue, and Machine Learning workers.
+# ==============================================================================
+
+version: "3.8"
+
+services:
+  immich-server:
+    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
+    container_name: immich_server
+    volumes:
+      - ${UPLOAD_LOCATION}:/usr/src/app/upload
+      - /etc/localtime:/etc/localtime:ro
+    env_file:
+      - .env
+    ports:
+      - "2283:2283"
+    depends_on:
+      - redis
+      - database
+    restart: unless-stopped
+
+  immich-machine-learning:
+    image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}
+    container_name: immich_machine_learning
+    volumes:
+      - model-cache:/cache
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  redis:
+    image: docker.io/redis:6.2-alpine@sha256:84882e87b36c732832502ba14f0e9d38115f532ff61a6949d95f9e791d9b3789
+    container_name: immich_redis
+    restart: unless-stopped
+
+  database:
+    image: docker.io/tensorchord/pgvecto-rs:pg14-v0.2.0@sha256:90724186f0a3517cf6914295b5ab03d7372a929064710a497034c449e79fbe41
+    container_name: immich_postgres
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_DB: ${DB_DATABASE_NAME:-immich}
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+    volumes:
+      - ${DB_DATA_LOCATION}:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  model-cache:
