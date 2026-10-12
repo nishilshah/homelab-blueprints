@@ -1,45 +1,146 @@
-# 📈 Quantitative Research & Trading Ingress (LXC 108)
+# 📈 Quantitative Research & Trading Ingress Engine (LXC 108)
 
-[![OpenBB](https://img.shields.io/badge/OpenBB-Platform-000000?style=for-the-badge&logo=python&logoColor=white)](https://openbb.co)
-[![Interactive Brokers](https://img.shields.io/badge/Interactive_Brokers-IB_Gateway-D91A2A?style=for-the-badge&logoColor=white)](https://www.interactivebrokers.com)
+[![OpenBB](https://img.shields.io/badge/OpenBB-Platform_v4-000000?style=for-the-badge&logo=python&logoColor=white)](https://openbb.co)
+[![Interactive Brokers](https://img.shields.io/badge/Interactive_Brokers-IB_Gateway-D91A2A?style=for-the-badge&logo=interactivebrokers&logoColor=white)](https://www.interactivebrokers.com)
+[![TradingView](https://img.shields.io/badge/TradingView-Webhook_Ingress-131722?style=for-the-badge&logo=tradingview&logoColor=white)](https://www.tradingview.com)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Microservice-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-An on-premise quantitative financial research platform and automated execution system running inside a Debian 12 LXC container. Features **OpenBB SDK**, a **secure TradingView webhook listener**, and an **Interactive Brokers Gateway (IB Gateway)** bridge with 2-step Telegram trade confirmations.
+An on-premise, enterprise-grade quantitative market research platform and automated execution system running inside a Debian 12 LXC container on Proxmox VE. Combines technical alert ingestion from **TradingView**, fundamental ratio verification via **OpenBB Platform**, an AI-driven qualitative sanity check, and **human-in-the-loop trade execution** against **Interactive Brokers (IBKR)**.
 
 ---
 
 ## 🔗 Official Documentation & External Links
 
-- **OpenBB Platform:** [openbb.co](https://openbb.co)
-- **OpenBB Docs:** [docs.openbb.co](https://docs.openbb.co)
-- **Interactive Brokers API:** [interactivebrokers.github.io](https://interactivebrokers.github.io)
-- **ib_insync Python Library:** [github.com/erdewit/ib_insync](https://github.com/erdewit/ib_insync)
-- **TradingView Webhooks:** [tradingview.com/support/solutions/43000529348](https://www.tradingview.com/support/solutions/43000529348-about-webhooks/)
+- **OpenBB Platform:** [openbb.co](https://openbb.co) • [OpenBB Documentation](https://docs.openbb.co) • [GitHub](https://github.com/OpenBB-finance/OpenBB)
+- **Interactive Brokers API:** [interactivebrokers.github.io](https://interactivebrokers.github.io) • [API Reference Guide](https://www.interactivebrokers.com/campus/ibkr-api-page/)
+- **ib_insync Python Framework:** [github.com/erdewit/ib_insync](https://github.com/erdewit/ib_insync) • [Documentation](https://ib-insync.readthedocs.io)
+- **Headless IB Gateway Container:** [github.com/gnzsnz/ib-gateway](https://github.com/gnzsnz/ib-gateway)
+- **TradingView Webhook Alerts:** [tradingview.com/support/solutions/43000529348](https://www.tradingview.com/support/solutions/43000529348-about-webhooks/)
+- **Exchange Calendars (XNYS / XTSE):** [github.com/gerrymanoim/exchange_calendars](https://github.com/gerrymanoim/exchange_calendars)
 
 ---
 
-## 🏗️ Execution Architecture & Risk Safeguards
+## 🧠 Algorithmic Strategy & Decision Engine
+
+The engine implements a **Hybrid Technical-Fundamental Mean-Reversion & Breakout Architecture**:
 
 ```mermaid
 flowchart TD
-    TV["TradingView Alert Webhook"] --> Ingress["Flask Ingress Listener (Port 8080)<br/>Passphrase Verification"]
-    
-    subgraph Safeguards ["Risk & Margin Verification Engine"]
-        Ingress --> CashCheck["Query Settled Cash from IBKR<br/>Hard Ceiling: Max $500 USD/Trade"]
-        CashCheck --> MarginCheck{"Margin Prohibited?<br/>Cost <= Settled Cash"}
-        MarginCheck -->|Passed| Bot["Telegram 2-Step Approval Bot<br/>(@quant_bot)"]
-        MarginCheck -->|Failed| Reject["Reject & Log Warning"]
+    subgraph MarketSensors ["1. Market Signal Generation"]
+        Pine["TradingView PineScript Strategy<br/>(1-Hour / Daily Timeframe)"]
+        Indicators["Technical Filters:<br/>• Bollinger Bands (20, 2)<br/>• RSI (14) < 30 (Oversold)<br/>• Volume Surge > 1.5x 20-SMA"]
+        Pine --- Indicators
     end
 
-    subgraph ApprovalFlow ["Human-In-The-Loop Execution"]
-        Bot -->|5-Min TTL Callback Prompt| Trader["Authorized Trader Mobile"]
-        Trader -->|Tap [ Approve Buy ]| Exec["IBKR Execution Engine"]
-        Trader -->|Tap [ Reject ]| Cancel["Cancel Order"]
+    subgraph IngressGateway ["2. Webhook Ingress (Port 8080)"]
+        TV_Alert["Webhook JSON Payload"]
+        Auth["Constant-Time HMAC / Passphrase Check"]
+        Debounce["Sliding-Window Alert Storm Debouncer<br/>(Max 3 alerts / 60 seconds)"]
+        Pine -->|Encrypted HTTPS POST| TV_Alert --> Auth --> Debounce
     end
 
-    Exec -->|Strict Limit Order ONLY| IBG["IB Gateway (Port 4002)<br/>Paper/Live Trading Bridge"]
-    IBG --> Market["Interactive Brokers Financial Markets"]
+    subgraph FundamentalAI ["3. Fundamental & Qualitative Audit"]
+        OpenBB["OpenBB REST Microservice (Port 8000)<br/>Query P/E, Debt/Equity, ROCE, FCF"]
+        Cache["24-Hour TTL SQLite Cache<br/>(Instant 1ms Lookup)"]
+        AI["Google Gemini Qualitative Reasoner<br/>Synthesize 2-Sentence Bull/Bear Thesis"]
+        
+        Debounce --> OpenBB <--> Cache
+        OpenBB --> AI
+    end
+
+    subgraph RiskSafeguards ["4. Quantitative Risk Guardian"]
+        Cash["Query IBKR Settled Cash (Port 4002)"]
+        Ceiling["Hard Ceiling: Max $500 USD / Trade"]
+        Margin["Margin Borrowing Prohibited:<br/>(Limit Price * Qty) <= Settled Cash"]
+        Calendar["Check Exchange Calendar (XNYS/XTSE)<br/>Market Open Verification"]
+
+        AI --> Cash --> Ceiling --> Margin --> Calendar
+    end
+
+    subgraph HumanApproval ["5. Human-in-the-Loop Confirmation"]
+        TG["Telegram Bot Daemon (@quant_bot)"]
+        Button["Inline Interactive Buttons<br/>5-Minute Time-To-Live (TTL)"]
+        Trader["📱 Authorized Trader Phone"]
+        
+        Calendar --> TG --> Button --> Trader
+    end
+
+    subgraph Execution ["6. Order Execution & Audit"]
+        Trader -->|Tap [ ✅ Approve Buy ]| Router["Broker Router (ib_insync)"]
+        Router -->|Strict Limit Order ONLY| IBG["Headless IB Gateway (Port 4002)"]
+        IBG --> Market["Financial Markets (NYSE / NASDAQ / TSX)"]
+        
+        IBG -->|Fill Event Callback| Listener["Fill Listener Daemon"]
+        Listener --> SQLiteAudit["SQLite Trade Ledger (WAL Mode)"]
+        Listener --> CSVAudit["CRA/IRS Tax Audit CSV"]
+        Listener --> FillAlert["Telegram Execution Receipt"]
+    end
 ```
+
+### Detailed Strategy Rules:
+1. **Technical Trigger (PineScript):**
+   - **Long Entry:** Price touches lower Bollinger Band (20, 2) while 14-period RSI is oversold ($< 30$) and trading volume exceeds the 20-day moving average by 1.5x.
+   - **Exit Strategy:** Price crosses the 20-period SMA middle band or reaches an explicit Stop Loss / Take Profit target.
+2. **Fundamental Health Filter (OpenBB Platform):**
+   - Automatically rejects companies with extreme insolvency or balance sheet risk:
+     $$\text{Debt-to-Equity} < 2.0 \quad \text{and} \quad \text{Operating Cash Flow} > 0$$
+3. **AI Qualitative Verdict (Gemini Reasoning Node):**
+   - Synthesizes recent earnings results and technical alert context into a 2-sentence rationale with an explicit verdict: `FAVORABLE`, `NEUTRAL`, or `HIGH_RISK`.
+   - If marked `HIGH_RISK`, the Telegram alert is highlighted with warning icons to prevent blind trade approvals.
+
+---
+
+## 🛡️ Risk Safeguards & Margin Protection Rules
+
+| Safeguard | Exact Rule / Logic | Purpose |
+| :--- | :--- | :--- |
+| **Trade Sizing Ceiling** | $\text{Order Value} \le \$500.00\text{ USD}$ | Limits maximum capital exposure per single trade |
+| **No Margin Borrowing** | $\text{Order Value} \le \text{Settled Cash}$ | Prevents borrowing fees, interest charges, or margin calls |
+| **Order Type Enforcement**| **Strict Limit Orders ONLY** (`orderType='LMT'`) | Eliminates market order slippage during volatile opens |
+| **Limit Price Buffer** | $\text{Limit Price} = \text{Alert Price} \times 1.002$ | 0.2% price buffer guarantees fill without chasing |
+| **Alert Storm Debouncer** | Sliding window: Max 3 alerts per 60 seconds | Consolidates market open alert bursts into a single digest |
+| **Signal Freshness TTL** | 5-minute expiration timestamp | Prevents stale alerts from executing hours later |
+| **Sell Order Protection** | $\text{Sell Qty} \le \text{Current Long Position}$ | Prevents accidental naked short-selling |
+| **Emergency Kill Switch** | Command `/kill` in Telegram | Immediately cancels all open orders and halts trading |
+
+---
+
+## 🧪 Paper Trading vs. Live Trading Setup
+
+The system is configured to support **Paper Trading** out-of-the-box, allowing you to validate strategies without risking real capital:
+
+```mermaid
+flowchart LR
+    subgraph IBGateway ["IB Gateway Docker Container (ghcr.io/gnzsnz/ib-gateway:stable)"]
+        Paper["Paper Trading Mode<br/>Port: 4002 (Loopback Only)<br/>Simulated Fills & Cash"]
+        Live["Live Trading Mode<br/>Port: 4001 (Loopback Only)<br/>Real Capital & Execution"]
+    end
+
+    Ingress["Python Ingress Engine (ib_insync)"] -->|TWS_PORT=4002| Paper
+    Ingress -.->|TWS_PORT=4001 (Requires Live Auth)| Live
+```
+
+### How to Run Paper Trading:
+1. **Container Port:** Set `TWS_PORT=4002` in `/docker/ib-gateway/.env`.
+2. **Network Isolation:** Port `4002` is bound strictly to `127.0.0.1:4002` on the container loopback interface, preventing unauthorized access from WAN or external LAN clients.
+3. **Simulated Fills:** IBKR paper trading accounts simulate order fills against real-time market data without touching real funds.
+4. **Audit Verification:** Check `trading_system.db` to inspect filled prices, simulated commissions, and portfolio balances.
+
+### Migration Checklist to Live Trading:
+- [ ] Minimum 30 days of consistent paper trading logs.
+- [ ] Confirm no orphaned or unhandled order states in `trading_system.db`.
+- [ ] Change `TWS_PORT=4001` and update credentials to live trading credentials.
+- [ ] Verify live 2FA multi-factor authentication handshake on IB Key mobile app.
+
+---
+
+## 🔗 Cross-Service Integrations
+
+- **Firefly III Financial Integration:** Fills logged in the SQLite trade ledger can be synced into Firefly III under the `Quant Trading Profit / Loss` category to track realized gains/losses on your family balance sheet.
+- **Telegram Alert Bot (`@quant_bot`):** Dispatches real-time human-in-the-loop trade approval cards with inline buttons.
+- **Prometheus & Grafana:** Scrapes container CPU, memory, and SQLite execution latency.
 
 ---
 
@@ -47,11 +148,11 @@ flowchart TD
 
 | Parameter | Specification | Notes |
 | :--- | :--- | :--- |
-| **Virtualization** | Debian 12 LXC Container | Unprivileged with `nesting=1` |
-| **Cores** | 2 vCPUs | Python pandas calculations and async event loops |
-| **Memory** | 4096 MB (4 GB) | IB Gateway JVM + OpenBB cache |
-| **Disk** | 24 GB SSD (`local-lvm`) | Python virtual environments and audit database |
-| **Ports** | `8080` (Webhook Ingress), `4002` (IB Gateway API) | Internal localhost & LAN only |
+| **Virtualization** | Debian 12 LXC Container | Unprivileged with `nesting=1,keyctl=1` |
+| **Cores** | 2 vCPUs | Handles OpenBB calculations and async event loops |
+| **Memory** | 4096 MB (4 GB) | IB Gateway Java VM (~1.2GB) + Python runtime (~800MB) |
+| **Disk** | 24 GB SSD (`local-lvm`) | Python virtual environments & historical market data cache |
+| **Ports** | `8080` (Webhook), `8000` (OpenBB), `4002` (IB Gateway) | Loopback and internal subnet only |
 
 ---
 
@@ -72,7 +173,7 @@ flowchart TD
      --start 1
    ```
 
-2. **Install Python Quantitative Stack:**
+2. **Deploy Python Virtual Environment & OpenBB:**
    Enter container (`pct enter 108`):
    ```bash
    apt-get update && apt-get install -y python3 python3-pip python3-venv git curl build-essential
@@ -83,16 +184,27 @@ flowchart TD
    pip install openbb ib_insync flask requests pandas exchange_calendars
    ```
 
-3. **Configure Ingress Webhook Passphrase:**
-   Create an environment file `/opt/quant/.env`:
-   ```bash
-   WEBHOOK_PASSPHRASE=<RANDOM_ALPHANUMERIC_SECRET>
-   TELEGRAM_BOT_TOKEN=<TELEGRAM_BOT_TOKEN_FROM_BOTFATHER>
-   TELEGRAM_CHAT_ID=<YOUR_TELEGRAM_CHAT_ID>
-   IB_PORT=4002
+3. **Deploy Headless IB Gateway Container:**
+   Create `/docker/ib-gateway/docker-compose.yml`:
+   ```yaml
+   version: "3.8"
+   services:
+     ib-gateway:
+       image: ghcr.io/gnzsnz/ib-gateway:stable
+       container_name: quant-ib-gateway
+       restart: unless-stopped
+       environment:
+         - TWS_USERID=<YOUR_IBKR_USERNAME>
+         - TWS_PASSWORD=<YOUR_IBKR_PASSWORD>
+         - TRADING_MODE=paper
+         - TWS_PORT=4002
+         - READ_ONLY_API=no
+       ports:
+         - "127.0.0.1:4002:4002"
    ```
 
 4. **Verify TradingView Alert Ingress Payload Format:**
+   In TradingView Alert settings, set Webhook URL to `http://<CONTAINER_IP>:8080/webhook/tradingview` with payload:
    ```json
    {
      "passphrase": "<YOUR_WEBHOOK_PASSPHRASE>",

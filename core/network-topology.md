@@ -34,13 +34,13 @@ flowchart TD
                 Quant["LXC 108: Quant Trading<br/>(192.168.1.248)"]
                 Firefly["LXC 109: Firefly III<br/>(192.168.1.245)"]
                 Immich["LXC 102: Immich Photos<br/>(192.168.1.252)"]
-                Monitor["LXC 104: Monitoring<br/>(192.168.1.249)"]
+                Monitor["LXC 105: Monitoring<br/>(192.168.1.249)"]
             end
 
             subgraph VMs ["Virtual Machines"]
                 TrueNAS["VM 101: TrueNAS SCALE<br/>(192.168.1.139)"]
                 Servarr["VM 100: Servarr Docker<br/>(192.168.1.251)"]
-                HA["VM 105: Home Assistant<br/>(192.168.1.72)"]
+                HA["VM 102: Home Assistant<br/>(192.168.1.240)"]
             end
 
             vmbr0 --> LXCs
@@ -69,8 +69,8 @@ flowchart TD
 | `192.168.1.251` | `servarr.homelab.local` | VM 100 | Ubuntu 24.04 Media Docker Stack & Homepage |
 | `192.168.1.252` | `immich.homelab.local` | LXC 102 | Immich Photo & Video Cloud |
 | `192.168.1.253` | `tailscale.homelab.local` | LXC 103 | Tailscale Subnet Router & Mesh Gateway |
-| `192.168.1.249` | `monitoring.homelab.local`| LXC 104 | Prometheus & Grafana Telemetry |
-| `192.168.1.72` | `homeassistant.homelab.local`| VM 105 | Home Assistant OS (HAOS) Smart Hub |
+| `192.168.1.249` | `monitoring.homelab.local`| LXC 105 | Prometheus & Grafana Telemetry |
+| `192.168.1.240` | `homeassistant.homelab.local`| VM 102 | Home Assistant OS (HAOS) Smart Hub |
 | `192.168.1.246` | `paperless.homelab.local` | LXC 106 | Paperless-ngx OCR Document Archive |
 | `192.168.1.247` | `n8n.homelab.local` | LXC 107 | n8n Workflow Engine & Telegram AI Bot |
 | `192.168.1.248` | `quant.homelab.local` | LXC 108 | OpenBB & TradingView Ingress Webhook |

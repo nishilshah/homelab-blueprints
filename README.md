@@ -35,7 +35,7 @@ flowchart TD
 
         subgraph NetworkAccess ["Zero-Trust & Monitoring"]
             Tailscale["LXC 103: Tailscale Gateway<br/>Subnet Router & Exit Node"]
-            Monitoring["LXC 104: Prometheus & Grafana<br/>Cluster Telemetry"]
+            Monitoring["LXC 105: Prometheus & Grafana<br/>Cluster Telemetry"]
         end
 
         subgraph CoreLXCs ["Debian 12 Application Containers"]
@@ -48,7 +48,7 @@ flowchart TD
 
         subgraph DedicatedVMs ["Dedicated Virtual Machines"]
             MediaStack["VM 100: Servarr Stack<br/>Jellyfin (4K QuickSync) + *Arr + Gluetun VPN"]
-            HA["VM 105: Home Assistant OS<br/>Smart Home Hub & Wall Tablets"]
+            HA["VM 102: Home Assistant OS<br/>Smart Home Hub & Wall Tablets"]
         end
     end
 
