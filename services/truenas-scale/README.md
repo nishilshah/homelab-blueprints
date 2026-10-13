@@ -25,43 +25,56 @@ A high-performance, enterprise-grade storage appliance running as a virtual mach
 
 ```mermaid
 flowchart TD
+    classDef hardware fill:#334155,stroke:#94a3b8,stroke-width:2px,color:#ffffff;
+    classDef zfs fill:#047857,stroke:#34d399,stroke-width:2px,color:#ffffff;
+    classDef dataset fill:#0369a1,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
+    classDef sharing fill:#6b21a8,stroke:#c084fc,stroke-width:2px,color:#ffffff;
+    classDef client fill:#1d4ed8,stroke:#60a5fa,stroke-width:2px,color:#ffffff;
+
     subgraph HardwarePassthrough ["1. Storage Controller & Physical Drives"]
-        HBA["PCIe SAS HBA / SATA Controller<br/>Passed through directly via IOMMU / VirtIO-SCSI"]
-        D1["SATA HDD 1 (8TB Enterprise)"]
-        D2["SATA HDD 2 (8TB Enterprise)"]
-        HBA --- D1
-        HBA --- D2
+        HBA["🔌 PCIe SAS HBA / SATA Controller<br/>IOMMU Passthrough to TrueNAS VM"]:::hardware
+        D1[("💽 SATA HDD 1 - 8TB Enterprise")]:::hardware
+        D2[("💽 SATA HDD 2 - 8TB Enterprise")]:::hardware
+        D1 --- HBA
+        D2 --- HBA
     end
 
     subgraph TrueNAS_Core ["2. TrueNAS SCALE Storage Engine (VM 101)"]
-        Pool["ZFS Pool: 'tank'<br/>Topology: 2-Way Mirror (8TB Usable)<br/>Self-Healing Bit-Rot Protection"]
-        ARC["ZFS Adaptive Replacement Cache (ARC)<br/>16 GB Dedicated High-Speed RAM"]
+        Pool["🛡️ ZFS Pool: 'tank'<br/>Topology: 2-Way Mirror (8TB Usable)<br/>Self-Healing Bit-Rot Protection"]:::zfs
+        ARC["⚡ ZFS Adaptive Replacement Cache (ARC)<br/>16 GB Dedicated High-Speed RAM"]:::zfs
         
         subgraph Datasets ["Optimized ZFS Datasets"]
-            DS_Media["/mnt/tank/data/media<br/>recordsize=1M | compression=lz4"]
-            DS_Photos["/mnt/tank/data/photos<br/>recordsize=256K | compression=lz4"]
-            DS_Paperless["/mnt/tank/paperless/media<br/>recordsize=128K | compression=zstd"]
-            DS_Consume["/mnt/tank/paperless/consume<br/>recordsize=128K | compression=lz4"]
+            DS_Media["🎬 tank/data/media<br/>recordsize=1M | compression=lz4"]:::dataset
+            DS_Photos["📷 tank/data/photos<br/>recordsize=256K | compression=lz4"]:::dataset
+            DS_Paperless["📄 tank/paperless/media<br/>recordsize=128K | compression=zstd"]:::dataset
+            DS_Consume["📥 tank/paperless/consume<br/>recordsize=128K | compression=lz4"]:::dataset
         end
         
-        Pool --> Datasets
-        ARC <--> Pool
+        Pool --> DS_Media
+        Pool --> DS_Photos
+        Pool --> DS_Paperless
+        Pool --> DS_Consume
+        Pool --> ARC
+        ARC --> Pool
     end
 
-    HardwarePassthrough --> TrueNAS_Core
+    HBA --> Pool
 
     subgraph SharingServices ["3. Network Export Daemons"]
-        NFS["NFSv4 Kernel Server<br/>Maproot: root:root | Low-latency POSIX"]
-        SMB["Samba SMB / CIFS Daemon<br/>Apple macOS Extensions (vfs_fruit)"]
+        NFS["🌐 NFSv4 Kernel Server<br/>Maproot: root:root | Low-latency POSIX"]:::sharing
+        SMB["📁 Samba SMB / CIFS Daemon<br/>Apple macOS Extensions (vfs_fruit)"]:::sharing
     end
 
-    Datasets --> SharingServices
+    DS_Media --> NFS
+    DS_Photos --> NFS
+    DS_Paperless --> NFS
+    DS_Consume --> SMB
 
     subgraph HomelabClients ["4. Homelab Service Consumers"]
-        VM100["VM 100: Servarr & Jellyfin<br/>Mounts /mnt/tank/data/media"]
-        LXC102["LXC 102: Immich Photos<br/>Mounts /mnt/tank/data/photos"]
-        LXC106["LXC 106: Paperless-ngx<br/>Mounts /mnt/tank/paperless/media"]
-        Scanners["📱 Mobile Scanners & Desktops<br/>SMB Drop: /paperless/consume"]
+        VM100["🎬 VM 100: Servarr & Jellyfin<br/>Mounts tank/data/media"]:::client
+        LXC102["📷 LXC 102: Immich Photos<br/>Mounts tank/data/photos"]:::client
+        LXC106["📄 LXC 106: Paperless-ngx<br/>Mounts tank/paperless/media"]:::client
+        Scanners["📱 Mobile Scanners & Desktops<br/>SMB Drop: /paperless/consume"]:::client
     end
 
     NFS -->|High-throughput streaming| VM100

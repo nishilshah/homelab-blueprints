@@ -25,30 +25,38 @@ A high-performance, self-hosted photo and video management system running inside
 
 ```mermaid
 flowchart TD
+    classDef client fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
+    classDef gateway fill:#b45309,stroke:#fbbf24,stroke-width:2px,color:#ffffff;
+    classDef ml fill:#7c3aed,stroke:#c084fc,stroke-width:2px,color:#ffffff;
+    classDef db fill:#312e81,stroke:#818cf8,stroke-width:2px,color:#ffffff;
+    classDef storage fill:#059669,stroke:#34d399,stroke-width:2px,color:#ffffff;
+
     subgraph MobileClients ["1. Mobile Clients & Ingestion Sources"]
-        iOS["📱 iPhone (iOS Background Sync)"]
-        Android["📱 Android (Automatic Camera Roll Sync)"]
-        Web["💻 Web Browser (Batch Drag & Drop)"]
+        iOS["📱 iPhone - iOS Background Sync"]:::client
+        Android["📱 Android - Camera Roll Sync"]:::client
+        Web["💻 Web Browser - Drag & Drop"]:::client
     end
 
     subgraph ImmichGateway ["2. Immich Ingress & Core API (LXC 102 - Port 2283)"]
-        Server["Immich Server (Node.js API Gateway)"]
-        RedisQ["Redis 7 Task Broker<br/>Queues: Thumbnail, Metadata, Transcode, ML"]
+        Server["🌐 Immich Server - Node.js API Gateway"]:::gateway
+        RedisQ["⚡ Redis 7 Task Broker<br/>Queues: Thumbnail, Metadata, Transcode, ML"]:::gateway
         Server --> RedisQ
     end
 
-    MobileClients -->|Encrypted HTTPS API| Server
+    iOS -->|Encrypted HTTPS API| Server
+    Android -->|Encrypted HTTPS API| Server
+    Web -->|Encrypted HTTPS API| Server
 
-    subgraph ML_Engine ["3. Machine Learning Microservice (Python / ONNX)"]
-        CLIP["CLIP Neural Network<br/>Generates 512-dim visual embeddings"]
-        Face["InsightFace Engine<br/>Facial landmark detection & clustering"]
+    subgraph ML_Engine ["3. Machine Learning Microservice - Python & ONNX"]
+        CLIP["🧠 CLIP Neural Network<br/>Generates 512-dim visual embeddings"]:::ml
+        Face["👤 InsightFace Engine<br/>Facial landmark detection & clustering"]:::ml
         RedisQ --> CLIP
         RedisQ --> Face
     end
 
     subgraph DatabaseLayer ["4. Database & Vector Store"]
-        Postgres["PostgreSQL 16 Database<br/>Core asset metadata, albums, user accounts"]
-        PgVector["pgvector Extension<br/>HNSW Indexing for Sub-millisecond Vector Search"]
+        Postgres[("💾 PostgreSQL 16 Database<br/>Core asset metadata, albums, users")]:::db
+        PgVector["📐 pgvector Extension<br/>HNSW Indexing for Sub-ms Vector Search"]:::db
         
         CLIP -->|Store Vectors| PgVector
         Face -->|Store Face Embeddings| PgVector
@@ -56,14 +64,15 @@ flowchart TD
     end
 
     subgraph StorageLayer ["5. TrueNAS SCALE Storage (ZFS Pool: tank)"]
-        NFS["NFSv4 Mount: /mnt/tank/data/photos<br/>Original High-Res RAW / JPEG / HEIC & 4K Videos"]
-        Snapshots["Automated ZFS Snapshots<br/>Zero data loss guarantee"]
+        NFS["📦 NFSv4 Mount: tank/data/photos<br/>Original High-Res RAW / JPEG / 4K Videos"]:::storage
+        Snapshots["🛡️ Automated ZFS Snapshots<br/>Zero data loss guarantee"]:::storage
         
         Server -->|Persist Binaries| NFS
         NFS --- Snapshots
     end
 
-    Server <--> Postgres
+    Server --> Postgres
+    Postgres --> Server
 ```
 
 ---

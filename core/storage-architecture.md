@@ -17,27 +17,35 @@ This blueprint documents the ZFS pool topology, dataset hierarchies, sharing pro
 
 ```mermaid
 flowchart TD
-    subgraph StoragePool ["ZFS Pool: 'tank' (TrueNAS SCALE)"]
-        direction TB
-        Pool["ZFS Mirror / RAID-Z2 (8TB+ RAW)<br/>Compression: LZ4 | Atime: Off"]
+    classDef pool fill:#047857,stroke:#34d399,stroke-width:2px,color:#ffffff;
+    classDef dataset fill:#0369a1,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
+    classDef client fill:#7c3aed,stroke:#c084fc,stroke-width:2px,color:#ffffff;
+
+    subgraph StoragePool ["ZFS Storage Engine - TrueNAS SCALE"]
+        Pool["🛡️ ZFS Mirror: 'tank' (8TB+ RAW)<br/>Compression: LZ4 | Atime: Off | Healing"]:::pool
         
-        subgraph Datasets ["Datasets & Allocation"]
-            Media["tank/data/media<br/>(Movies, TV, Music, Books)"]
-            Downloads["tank/data/downloads<br/>(Complete / Incomplete)"]
-            Photos["tank/data/photos<br/>(Immich Original & Encoded)"]
-            Paperless["tank/paperless<br/>(Searchable OCR PDFs)"]
-            Consume["tank/paperless/consume<br/>(Scanner Drop Folder)"]
-            Backups["tank/backups<br/>(PVE Backups & Database Dumps)"]
+        subgraph Datasets ["Datasets & Storage Allocation"]
+            Media["🎬 tank/data/media<br/>Movies, TV, Music, Books"]:::dataset
+            Downloads["📥 tank/data/downloads<br/>Complete & Incomplete Chunks"]:::dataset
+            Photos["📷 tank/data/photos<br/>Immich Originals & Encoded Thumbnails"]:::dataset
+            Paperless["📄 tank/paperless<br/>Searchable OCR Archival PDFs"]:::dataset
+            Consume["📬 tank/paperless/consume<br/>Network Scanner Drop Folder"]:::dataset
+            Backups["💾 tank/backups<br/>PVE Backups & Database Dumps"]:::dataset
         end
         
-        Pool --> Datasets
+        Pool --> Media
+        Pool --> Downloads
+        Pool --> Photos
+        Pool --> Paperless
+        Pool --> Consume
+        Pool --> Backups
     end
 
-    subgraph Clients ["Service Consumers"]
-        Servarr["VM 100: Servarr Stack<br/>(Jellyfin, Sonarr, Radarr)"]
-        Immich["LXC 102: Immich Photos"]
-        PaperlessLXC["LXC 106: Paperless-ngx"]
-        Scanner["Mobile Devices & Scanners"]
+    subgraph Clients ["Homelab Service Consumers"]
+        Servarr["🎬 VM 100: Servarr Stack<br/>Jellyfin, Sonarr, Radarr"]:::client
+        Immich["📷 LXC 102: Immich Photos"]:::client
+        PaperlessLXC["📄 LXC 106: Paperless-ngx"]:::client
+        Scanner["📱 Mobile Scanners & Devices"]:::client
     end
 
     Media -->|NFSv4 Mount| Servarr

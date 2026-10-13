@@ -27,51 +27,64 @@ The document management pipeline unifies physical scanning, email polling, OCR e
 
 ```mermaid
 flowchart TD
+    classDef source fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
+    classDef n8n fill:#7c3aed,stroke:#c084fc,stroke-width:2px,color:#ffffff;
+    classDef storage fill:#059669,stroke:#34d399,stroke-width:2px,color:#ffffff;
+    classDef core fill:#b45309,stroke:#fbbf24,stroke-width:2px,color:#ffffff;
+    classDef db fill:#312e81,stroke:#818cf8,stroke-width:2px,color:#ffffff;
+    classDef link fill:#0f766e,stroke:#2dd4bf,stroke-width:2px,color:#ffffff;
+
     subgraph CaptureLayer ["1. Ingestion Sources"]
-        Scanner["📱 Mobile Scanner (QuickScan / Genius Scan)<br/>Network Multi-Function Printer"]
-        Email["📧 Automated Email Ingestion<br/>(Bank Statements, Utility E-Bills, Tax Slips)"]
+        Scanner["📱 Mobile Scanner - QuickScan / Genius<br/>Network Multi-Function Printer"]:::source
+        Email["📧 Automated Email Ingestion<br/>Bank Statements, Utility Bills, Tax Slips"]:::source
     end
 
     subgraph n8nLayer ["2. Orchestration & Pre-Processing (n8n Engine)"]
-        IMAP["n8n IMAP Poller Daemon"]
-        Decrypt["Password Decryption Routine<br/>(Decrypter for Passworded Bank PDFs)"]
-        PreTag["Metadata Extractor & Regex Matcher<br/>(Extracts Vendor, Billing Date, Amount)"]
+        IMAP["📨 n8n IMAP Poller Daemon"]:::n8n
+        Decrypt["🔓 Password Decryption Routine<br/>Removes protection from bank PDFs"]:::n8n
+        PreTag["🏷️ Metadata Extractor & Regex Matcher<br/>Extracts Vendor, Date, Amount"]:::n8n
         
-        Email --> IMAP --> Decrypt --> PreTag
+        Email --> IMAP
+        IMAP --> Decrypt
+        Decrypt --> PreTag
     end
 
     subgraph StorageLayer ["3. TrueNAS SCALE Storage (ZFS Pool: tank)"]
-        SMB["Samba Share (SMB): /mnt/tank/paperless/consume<br/>Drop folder for iOS/Android quick-shares"]
-        NFS_Data["NFSv4: /mnt/tank/paperless/data<br/>Search indices & application state"]
-        NFS_Media["NFSv4: /mnt/tank/paperless/media<br/>Immutable PDF/A archive & original binaries"]
-        ZFS_Snap["ZFS Hourly Snapshots (7-day retention)<br/>Ransomware & Bit-Rot Protection"]
+        SMB["📁 Samba Share SMB: /paperless/consume<br/>Drop folder for mobile apps"]:::storage
+        NFS_Data["🗄️ NFSv4: /paperless/data<br/>Search indices & app state"]:::storage
+        NFS_Media["📦 NFSv4: /paperless/media<br/>Immutable PDF/A archive & originals"]:::storage
+        ZFS_Snap["🛡️ ZFS Hourly Snapshots (7-day retention)<br/>Ransomware & Bit-Rot Protection"]:::storage
         
         NFS_Media --- ZFS_Snap
     end
 
-    subgraph PaperlessLXC ["4. Paperless-ngx Processing Core (LXC 106)"]
-        Inotify["Inotify Directory Watcher<br/>Detects new files instantly in /consume"]
-        RedisQ["Redis 7 Task Broker<br/>Decouples ingestion from heavy OCR tasks"]
-        WorkerPool["Celery Worker Pool (Tesseract 5 OCR)<br/>Languages: ENG, FRA | Mode: Redo / Skip"]
-        Whoosh["Whoosh Full-Text Inverted Index<br/>Sub-second full-text token search"]
-        Postgres["PostgreSQL 16 Database<br/>Document metadata, tags, custom fields"]
-        ML["Bayes / Neural Text Classifier<br/>Predicts Document Type, Tags, Correspondent"]
+    subgraph PaperlessCore ["4. Paperless-ngx Processing Core (LXC 106)"]
+        WebAPI["🌐 Paperless Web API & UI (Port 8000)"]:::core
+        Inotify["👀 Inotify Directory Watcher<br/>Detects new files instantly in /consume"]:::core
+        RedisQ["⚡ Redis 7 Task Broker<br/>Decouples ingestion from OCR workers"]:::core
+        WorkerPool["⚙️ Celery Worker Pool (Tesseract 5 OCR)<br/>Languages: ENG, FRA | Mode: Redo/Skip"]:::core
+        Whoosh["🔍 Whoosh Full-Text Inverted Index<br/>Sub-second token search"]:::db
+        Postgres[("💾 PostgreSQL 16 Database<br/>Document metadata, tags, fields")]:::db
+        ML["🧠 Bayes & Neural Text Classifier<br/>Predicts Document Type, Tags, Correspondent"]:::core
         
-        Inotify --> RedisQ --> WorkerPool
+        Inotify --> RedisQ
+        WebAPI --> RedisQ
+        RedisQ --> WorkerPool
         WorkerPool --> Whoosh
         WorkerPool --> Postgres
         WorkerPool --> ML
     end
 
     subgraph CrossLinkage ["5. Cross-Service Ecosystem Integration"]
-        Firefly["💰 Firefly III Finance Engine (LXC 109)<br/>Attach Paperless Document ID / URL to ledger entry"]
-        TG["📱 Telegram Notification Bot<br/>Pushes OCR summary card with thumbnail preview"]
+        Firefly["💰 Firefly III Finance Engine (LXC 109)<br/>Attach Paperless Document URL to ledger entry"]:::link
+        TG["🔔 Telegram Notification Bot<br/>Pushes OCR summary card with thumbnail preview"]:::link
     end
 
-    Scanner -->|Direct SMB Save| SMB --> Inotify
-    PreTag -->|REST API POST /api/documents/post_document/| PaperlessLXC
+    Scanner -->|Direct SMB Save| SMB
+    SMB --> Inotify
+    PreTag -->|REST API POST| WebAPI
     WorkerPool -->|Store Final PDF/A| NFS_Media
-    Postgres -.->|Webhook / Polling| Firefly
+    Postgres -.->|Webhook Sync| Firefly
     WorkerPool -.->|Complete Event| TG
 ```
 

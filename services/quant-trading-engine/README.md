@@ -28,54 +28,71 @@ The engine implements a **Hybrid Technical-Fundamental Mean-Reversion & Breakout
 
 ```mermaid
 flowchart TD
+    classDef signal fill:#1e3a8a,stroke:#60a5fa,stroke-width:2px,color:#ffffff;
+    classDef security fill:#854d0e,stroke:#facc15,stroke-width:2px,color:#ffffff;
+    classDef ai fill:#581c87,stroke:#c084fc,stroke-width:2px,color:#ffffff;
+    classDef risk fill:#991b1b,stroke:#f87171,stroke-width:2px,color:#ffffff;
+    classDef human fill:#115e59,stroke:#2dd4bf,stroke-width:2px,color:#ffffff;
+    classDef exec fill:#065f46,stroke:#34d399,stroke-width:2px,color:#ffffff;
+    classDef audit fill:#312e81,stroke:#818cf8,stroke-width:2px,color:#ffffff;
+
     subgraph MarketSensors ["1. Market Signal Generation"]
-        Pine["TradingView PineScript Strategy<br/>(1-Hour / Daily Timeframe)"]
-        Indicators["Technical Filters:<br/>• Bollinger Bands (20, 2)<br/>• RSI (14) < 30 (Oversold)<br/>• Volume Surge > 1.5x 20-SMA"]
+        Pine["📈 TradingView PineScript Strategy<br/>1-Hour & Daily Timeframe"]:::signal
+        Indicators["📊 Technical Filters<br/>• Bollinger Bands 20, 2<br/>• RSI 14 oversold below 30<br/>• Volume Surge over 1.5x 20-SMA"]:::signal
         Pine --- Indicators
     end
 
     subgraph IngressGateway ["2. Webhook Ingress (Port 8080)"]
-        TV_Alert["Webhook JSON Payload"]
-        Auth["Constant-Time HMAC / Passphrase Check"]
-        Debounce["Sliding-Window Alert Storm Debouncer<br/>(Max 3 alerts / 60 seconds)"]
-        Pine -->|Encrypted HTTPS POST| TV_Alert --> Auth --> Debounce
+        TV_Alert["📨 Webhook JSON Payload"]:::security
+        Auth["🔑 Constant-Time HMAC & Passphrase Check"]:::security
+        Debounce["🛡️ Sliding-Window Alert Storm Debouncer<br/>Max 3 alerts per 60 seconds"]:::security
+        Pine -->|Encrypted HTTPS POST| TV_Alert
+        TV_Alert --> Auth
+        Auth --> Debounce
     end
 
     subgraph FundamentalAI ["3. Fundamental & Qualitative Audit"]
-        OpenBB["OpenBB REST Microservice (Port 8000)<br/>Query P/E, Debt/Equity, ROCE, FCF"]
-        Cache["24-Hour TTL SQLite Cache<br/>(Instant 1ms Lookup)"]
-        AI["Google Gemini Qualitative Reasoner<br/>Synthesize 2-Sentence Bull/Bear Thesis"]
+        OpenBB["🏛️ OpenBB REST Microservice (Port 8000)<br/>Query P/E, Debt/Equity, ROCE, FCF"]:::ai
+        Cache[("💾 24-Hour TTL SQLite Cache<br/>Instant 1ms Lookup")]:::ai
+        AI["🧠 Google Gemini Qualitative Reasoner<br/>Synthesizes 2-Sentence Bull/Bear Rationale"]:::ai
         
-        Debounce --> OpenBB <--> Cache
+        Debounce --> OpenBB
+        OpenBB --> Cache
+        Cache --> OpenBB
         OpenBB --> AI
     end
 
     subgraph RiskSafeguards ["4. Quantitative Risk Guardian"]
-        Cash["Query IBKR Settled Cash (Port 4002)"]
-        Ceiling["Hard Ceiling: Max $500 USD / Trade"]
-        Margin["Margin Borrowing Prohibited:<br/>(Limit Price * Qty) <= Settled Cash"]
-        Calendar["Check Exchange Calendar (XNYS/XTSE)<br/>Market Open Verification"]
+        Cash["💰 Query IBKR Settled Cash (Port 4002)"]:::risk
+        Ceiling["🚫 Hard Ceiling: Max $500 USD per Trade"]:::risk
+        Margin["⛔ Margin Borrowing Strictly Prohibited<br/>Order Value must be below Settled Cash"]:::risk
+        Calendar["📅 Exchange Calendar Check (XNYS/XTSE)<br/>Market Open & Pre-Market Verification"]:::risk
 
-        AI --> Cash --> Ceiling --> Margin --> Calendar
+        AI --> Cash
+        Cash --> Ceiling
+        Ceiling --> Margin
+        Margin --> Calendar
     end
 
     subgraph HumanApproval ["5. Human-in-the-Loop Confirmation"]
-        TG["Telegram Bot Daemon (@quant_bot)"]
-        Button["Inline Interactive Buttons<br/>5-Minute Time-To-Live (TTL)"]
-        Trader["📱 Authorized Trader Phone"]
+        TG["🤖 Telegram Bot Daemon (@quant_bot)"]:::human
+        Button["🔘 Inline Interactive Approval Buttons<br/>5-Minute Time-To-Live Expiration"]:::human
+        Trader["📱 Authorized Trader Phone"]:::human
         
-        Calendar --> TG --> Button --> Trader
+        Calendar --> TG
+        TG --> Button
+        Button --> Trader
     end
 
     subgraph Execution ["6. Order Execution & Audit"]
-        Trader -->|Tap [ ✅ Approve Buy ]| Router["Broker Router (ib_insync)"]
-        Router -->|Strict Limit Order ONLY| IBG["Headless IB Gateway (Port 4002)"]
-        IBG --> Market["Financial Markets (NYSE / NASDAQ / TSX)"]
+        Trader -->|Tap: Approve Buy Order| Router["⚡ Broker Router (ib_insync)"]:::exec
+        Router -->|Strict Limit Order ONLY| IBG["🏦 Headless IB Gateway (Port 4002)"]:::exec
+        IBG --> Market["🌐 Financial Markets (NYSE / NASDAQ / TSX)"]:::exec
         
-        IBG -->|Fill Event Callback| Listener["Fill Listener Daemon"]
-        Listener --> SQLiteAudit["SQLite Trade Ledger (WAL Mode)"]
-        Listener --> CSVAudit["CRA/IRS Tax Audit CSV"]
-        Listener --> FillAlert["Telegram Execution Receipt"]
+        IBG -->|Fill Event Callback| Listener["🎧 Fill Listener Daemon"]:::audit
+        Listener --> SQLiteAudit[("📁 SQLite Trade Ledger WAL Mode")]:::audit
+        Listener --> CSVAudit["📑 CRA / IRS Tax Audit CSV"]:::audit
+        Listener --> FillAlert["🔔 Telegram Execution Receipt"]:::audit
     end
 ```
 
@@ -113,13 +130,17 @@ The system is configured to support **Paper Trading** out-of-the-box, allowing y
 
 ```mermaid
 flowchart LR
-    subgraph IBGateway ["IB Gateway Docker Container (ghcr.io/gnzsnz/ib-gateway:stable)"]
-        Paper["Paper Trading Mode<br/>Port: 4002 (Loopback Only)<br/>Simulated Fills & Cash"]
-        Live["Live Trading Mode<br/>Port: 4001 (Loopback Only)<br/>Real Capital & Execution"]
+    classDef paper fill:#115e59,stroke:#2dd4bf,stroke-width:2px,color:#ffffff;
+    classDef live fill:#991b1b,stroke:#f87171,stroke-width:2px,color:#ffffff;
+    classDef engine fill:#1e3a8a,stroke:#60a5fa,stroke-width:2px,color:#ffffff;
+
+    subgraph IBGateway ["🏦 IB Gateway Docker Container - ghcr.io/gnzsnz/ib-gateway"]
+        Paper["🧪 Paper Trading Mode<br/>Port: 4002 Loopback<br/>Simulated Fills & Virtual Cash"]:::paper
+        Live["🚨 Live Trading Mode<br/>Port: 4001 Loopback<br/>Real Capital & Direct Execution"]:::live
     end
 
-    Ingress["Python Ingress Engine (ib_insync)"] -->|TWS_PORT=4002| Paper
-    Ingress -.->|TWS_PORT=4001 (Requires Live Auth)| Live
+    Ingress["⚡ Python Ingress Engine"]:::engine -->|Port 4002 - Paper Mode| Paper
+    Ingress -.->|Port 4001 - Live Mode| Live
 ```
 
 ### How to Run Paper Trading:

@@ -31,22 +31,27 @@ A unified, fully automated home theater media and streaming stack hosted in an U
 
 ```mermaid
 flowchart TD
+    classDef client fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
+    classDef manager fill:#7c3aed,stroke:#c084fc,stroke-width:2px,color:#ffffff;
+    classDef vpn fill:#b45309,stroke:#fbbf24,stroke-width:2px,color:#ffffff;
+    classDef storage fill:#059669,stroke:#34d399,stroke-width:2px,color:#ffffff;
+    classDef playback fill:#dc2626,stroke:#f87171,stroke-width:2px,color:#ffffff;
+
     subgraph RequestDiscovery ["1. Discovery & User Requests"]
-        User["📱 Family Member / Mobile Client"] -->|1-Click Request| JS["Jellyseerr (Port 5055)<br/>User Discovery Portal"]
-        JS -->|New Movie Request| Radarr["Radarr (Port 7878)<br/>Movie Manager"]
-        JS -->|New TV Series Request| Sonarr["Sonarr (Port 8989)<br/>TV Episode Manager"]
+        User["📱 Family Member / Mobile Client"]:::client -->|1-Click Request| JS["🎬 Jellyseerr (Port 5055)<br/>User Discovery Portal"]:::client
+        JS -->|New Movie Request| Radarr["🎥 Radarr (Port 7878)<br/>Movie Manager"]:::manager
+        JS -->|New TV Series Request| Sonarr["📺 Sonarr (Port 8989)<br/>TV Episode Manager"]:::manager
     end
 
     subgraph IndexerSync ["2. Indexer Management"]
-        Prowlarr["Prowlarr (Port 9696)<br/>Syncs 50+ Usenet/Torrent Trackers"] --> Radarr
+        Prowlarr["🔍 Prowlarr (Port 9696)<br/>Syncs 50+ Usenet/Torrent Trackers"]:::manager --> Radarr
         Prowlarr --> Sonarr
     end
 
     subgraph VPNTunnel ["3. Gluetun VPN Shield Container (Isolated Network)"]
-        direction TB
-        VPN["Gluetun WireGuard Client (Mullvad / Proton)<br/>Killswitch Active | Port Forwarding Enabled"]
-        Qbit["qBittorrent (Port 8080)<br/>network_mode: 'service:gluetun'"]
-        NZB["NZBGet (Port 6789)<br/>network_mode: 'service:gluetun'"]
+        VPN["🛡️ Gluetun WireGuard Client<br/>Mullvad or Proton | Killswitch Active"]:::vpn
+        Qbit["📥 qBittorrent (Port 8080)<br/>Routed strictly through VPN tunnel"]:::vpn
+        NZB["⚡ NZBGet (Port 6789)<br/>Routed strictly through VPN tunnel"]:::vpn
         
         VPN --- Qbit
         VPN --- NZB
@@ -58,22 +63,22 @@ flowchart TD
     Sonarr -->|Send NZB File| NZB
 
     subgraph TrueNASStorage ["4. TrueNAS SCALE Storage (/mnt/tank/data)"]
-        Incomplete["/data/torrents/incomplete<br/>Active downloading chunks"]
-        Complete["/data/torrents/complete<br/>Seeding source data"]
-        MediaMovies["/data/media/movies<br/>Atomic Hardlink (0 copied bytes)"]
-        MediaTV["/data/media/tv<br/>Atomic Hardlink (0 copied bytes)"]
+        Incomplete["📂 /data/torrents/incomplete<br/>Active downloading chunks"]:::storage
+        Complete["📦 /data/torrents/complete<br/>Seeding source data"]:::storage
+        MediaMovies["🎬 /data/media/movies<br/>Atomic Hardlink - 0 copied bytes"]:::storage
+        MediaTV["📺 /data/media/tv<br/>Atomic Hardlink - 0 copied bytes"]:::storage
         
         Incomplete --> Complete
-        Complete -.->|Instant Hardlink (Same Filesystem)| MediaMovies
-        Complete -.->|Instant Hardlink (Same Filesystem)| MediaTV
+        Complete -.->|Instant Hardlink - Same Filesystem| MediaMovies
+        Complete -.->|Instant Hardlink - Same Filesystem| MediaTV
     end
 
     Qbit --> Incomplete
 
     subgraph PlaybackLayer ["5. Playback & Hardware Transcoding Engine"]
-        MediaMovies --> Jellyfin["Jellyfin 4K Server (Port 8096)<br/>Intel QuickSync Passthrough (/dev/dri)"]
+        MediaMovies --> Jellyfin["🍿 Jellyfin 4K Server (Port 8096)<br/>Intel QuickSync Passthrough /dev/dri"]:::playback
         MediaTV --> Jellyfin
-        Jellyfin -->|Direct Play / 4K Tone Mapping| Clients["📺 Apple TV 4K / Google TV / iPad"]
+        Jellyfin -->|Direct Play / 4K Tone Mapping| Clients["📺 Apple TV 4K / Google TV / iPad"]:::client
     end
 ```
 

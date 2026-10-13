@@ -24,37 +24,47 @@ A self-hosted, sovereign, double-entry financial accounting platform running ins
 
 ```mermaid
 flowchart TD
+    classDef source fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
+    classDef n8n fill:#7c3aed,stroke:#c084fc,stroke-width:2px,color:#ffffff;
+    classDef firefly fill:#059669,stroke:#34d399,stroke-width:2px,color:#ffffff;
+    classDef currency fill:#b45309,stroke:#fbbf24,stroke-width:2px,color:#ffffff;
+    classDef link fill:#312e81,stroke:#818cf8,stroke-width:2px,color:#ffffff;
+
     subgraph InboundSources ["1. Real-Time Transaction Ingestion"]
-        BankEmail["📧 Bank Transaction Alerts (Email)<br/>(Scotiabank, RBC, TD InfoAlerts)"]
-        Interac["💸 Interac e-Transfers (Email)<br/>(Inbound / Outbound peer transfers)"]
-        Telegram["📱 Conversational Telegram Bot<br/>(Natural language salary & cash entries)"]
-        TradingEngine["📈 Quant Trading Engine (LXC 108)<br/>(Trade fills & realized P&L)"]
+        BankEmail["📧 Bank Transaction Alerts - Email<br/>Scotiabank, RBC, TD InfoAlerts"]:::source
+        Interac["💸 Interac e-Transfers - Email<br/>Inbound & Outbound peer transfers"]:::source
+        Telegram["📱 Conversational Telegram Bot<br/>Natural language salary & cash entries"]:::source
+        TradingEngine["📈 Quant Trading Engine (LXC 108)<br/>Trade fills & realized P&L"]:::source
     end
 
     subgraph AutomationLayer ["2. Orchestration & Parsing (n8n LXC 107)"]
-        IMAP["IMAP Alert Polling Daemon"]
-        RegexParse["Regex / AI Transaction Parser<br/>Extracts Date, Amount, Merchant, Currency"]
-        TG_Relay["Systemd Long-Polling Relay<br/>Bypasses public webhooks securely"]
+        IMAP["📨 IMAP Alert Polling Daemon"]:::n8n
+        RegexParse["⚡ Regex & AI Transaction Parser<br/>Extracts Date, Amount, Merchant, Currency"]:::n8n
+        TG_Relay["🔄 Systemd Long-Polling Relay<br/>Bypasses public webhooks securely"]:::n8n
         
-        BankEmail --> IMAP --> RegexParse
+        BankEmail --> IMAP
+        IMAP --> RegexParse
         Interac --> IMAP
-        Telegram --> TG_Relay --> RegexParse
+        Telegram --> TG_Relay
+        TG_Relay --> RegexParse
         TradingEngine -->|Fill Event Webhook| RegexParse
     end
 
     subgraph FireflyCore ["3. Firefly III Accounting Core (LXC 109)"]
-        REST["Firefly REST API (Port 80)<br/>Authenticated via OAuth Bearer Token"]
-        RuleEngine["Automated Rule Classifier<br/>Assigns Category, Budget, & Expense Account"]
-        Ledger["Double-Entry Transaction Ledger<br/>Enforces zero-sum accounting integrity"]
+        REST["🌐 Firefly REST API (Port 80)<br/>Authenticated via OAuth Bearer Token"]:::firefly
+        RuleEngine["⚙️ Automated Rule Classifier<br/>Assigns Category, Budget, & Expense Account"]:::firefly
+        Ledger[("📒 Double-Entry Transaction Ledger<br/>Enforces zero-sum accounting integrity")]:::firefly
         
-        RegexParse --> REST --> RuleEngine --> Ledger
+        RegexParse --> REST
+        REST --> RuleEngine
+        RuleEngine --> Ledger
     end
 
     subgraph MultiCurrency ["4. Multi-Currency Global Balance Sheet"]
-        CAD["🇨🇦 Canadian Dollar (CAD)<br/>Chequing, Credit Cards, Car Loan"]
-        INR["🇮🇳 Indian Rupee (INR)<br/>Pune Real Estate, HDFC Home Loan, Savings"]
-        USD["🇺🇸 US Dollar (USD)<br/>IBKR Stock Portfolio & USD Savings"]
-        Rates["Daily Currency Rate Sync Cron<br/>Fetches ECB / Fixer foreign exchange rates"]
+        CAD["🇨🇦 Canadian Dollar - CAD<br/>Chequing, Credit Cards, Car Loan"]:::currency
+        INR["🇮🇳 Indian Rupee - INR<br/>Real Estate, Home Loan, Savings"]:::currency
+        USD["🇺🇸 US Dollar - USD<br/>IBKR Stock Portfolio & USD Savings"]:::currency
+        Rates["🕒 Daily Currency Rate Sync Cron<br/>Fetches ECB & Fixer foreign exchange rates"]:::currency
         
         Ledger --> CAD
         Ledger --> INR
@@ -63,8 +73,8 @@ flowchart TD
     end
 
     subgraph Linkages ["5. Cross-Service Ecosystem Integration"]
-        Paperless["📄 Paperless-ngx (LXC 106)<br/>Attach verified invoice PDF URL to ledger entry"]
-        HomeAssistant["🏠 Home Assistant (VM 102)<br/>Monthly budget progress gauge on wall tablet"]
+        Paperless["📄 Paperless-ngx (LXC 106)<br/>Attach verified invoice PDF URL to ledger entry"]:::link
+        HomeAssistant["🏠 Home Assistant (VM 102)<br/>Monthly budget progress gauge on wall tablet"]:::link
         
         Ledger -.->|Custom URL Attribute| Paperless
         Ledger -.->|REST Sensor Polling| HomeAssistant

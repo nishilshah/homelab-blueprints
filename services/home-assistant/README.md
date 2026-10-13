@@ -25,49 +25,58 @@ A dedicated, local-first smart home automation hub running **Home Assistant Oper
 
 ```mermaid
 flowchart TD
+    classDef iot fill:#b45309,stroke:#fbbf24,stroke-width:2px,color:#ffffff;
+    classDef host fill:#334155,stroke:#94a3b8,stroke-width:2px,color:#ffffff;
+    classDef haos fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
+    classDef link fill:#7c3aed,stroke:#c084fc,stroke-width:2px,color:#ffffff;
+    classDef ui fill:#0f766e,stroke:#2dd4bf,stroke-width:2px,color:#ffffff;
+
     subgraph PhysicalPeripherals ["1. Physical Peripherals & IoT Devices"]
-        ZigbeeUSB["Sonoff Zigbee 3.0 USB Dongle Plus<br/>(Silicon Labs EFR32MG21 / CC2652P)"]
-        Sensors["Zigbee Motion, Door & Temp Sensors"]
-        Plugs["Matter / Thread & ESPHome Smart Plugs"]
-        Lights["Local Philips Hue / Lutron Bridges"]
+        ZigbeeUSB["🔌 Sonoff Zigbee 3.0 USB Dongle Plus<br/>Silicon Labs EFR32MG21 / CC2652P"]:::iot
+        Sensors["📡 Zigbee Motion, Door & Temp Sensors"]:::iot
+        Plugs["⚡ Matter / Thread & ESPHome Smart Plugs"]:::iot
+        Lights["💡 Local Philips Hue & Lutron Bridges"]:::iot
         
         ZigbeeUSB --- Sensors
     end
 
-    subgraph HostHypervisor ["2. Proxmox VE Host (Bare Metal)"]
-        USBPass["IOMMU Hardware USB Passthrough<br/>Direct serial port forwarding: /dev/ttyUSB0"]
+    subgraph HostHypervisor ["2. Proxmox VE Host - Bare Metal"]
+        USBPass["🔌 IOMMU Hardware USB Passthrough<br/>Direct serial port forwarding: /dev/ttyUSB0"]:::host
         ZigbeeUSB --> USBPass
     end
 
     subgraph HAOS_VM ["3. Home Assistant OS (VM 102 - Port 8123)"]
-        CoreEngine["HA Core Event Bus & State Machine"]
-        Supervisor["HA Supervisor & Add-on Engine"]
+        CoreEngine["🏠 HA Core Event Bus & State Machine"]:::haos
+        Supervisor["🛡️ HA Supervisor & Add-on Engine"]:::haos
         
         subgraph ManagedAddons ["Managed Add-on Ecosystem"]
-            Z2M["Zigbee2MQTT Add-on"]
-            MQTT["Eclipse Mosquitto MQTT Broker"]
-            ESPHome["ESPHome Dashboard"]
+            Z2M["📡 Zigbee2MQTT Add-on"]:::haos
+            MQTT["📬 Eclipse Mosquitto MQTT Broker"]:::haos
+            ESPHome["⚡ ESPHome Dashboard"]:::haos
         end
         
-        USBPass --> Z2M --> MQTT --> CoreEngine
-        Plugs --> ESPHome --> CoreEngine
+        USBPass --> Z2M
+        Z2M --> MQTT
+        MQTT --> CoreEngine
+        Plugs --> ESPHome
+        ESPHome --> CoreEngine
         Lights --> CoreEngine
         Supervisor --- CoreEngine
     end
 
     subgraph CrossLinkage ["4. Cross-Service Ecosystem Integration"]
-        NAS["🗄️ TrueNAS SCALE (VM 101)<br/>Nightly Samba/NFS automated snapshot backups"]
-        FF["💰 Firefly III Finance (LXC 109)<br/>REST Sensor: Kitchen display of remaining monthly budget"]
-        Tailscale["🛡️ Tailscale Gateway (LXC 103)<br/>Encrypted remote control from family mobile phones"]
+        NAS["🗄️ TrueNAS SCALE (VM 101)<br/>Nightly Samba/NFS snapshot backups"]:::link
+        FF["💰 Firefly III Finance (LXC 109)<br/>Kitchen display remaining budget"]:::link
+        Tailscale["🛡️ Tailscale Gateway (LXC 103)<br/>Encrypted remote control from phones"]:::link
     end
 
     CoreEngine -.->|Automated Backup Copy| NAS
-    CoreEngine <-->|REST Sensor API| FF
-    CoreEngine <-->|Zero-Trust Remote Access| Tailscale
+    FF -->|REST Sensor API| CoreEngine
+    Tailscale -->|Zero-Trust Remote Access| CoreEngine
 
     subgraph ClientInterfaces ["5. User Interfaces & Wall Displays"]
-        Tablet["📱 Wall-Mounted iPad Kiosk (Fully Kiosk Browser)"]
-        Phones["📱 Family Mobile Devices (HA Companion App)"]
+        Tablet["📱 Wall-Mounted iPad Kiosk (Fully Kiosk)"]:::ui
+        Phones["📱 Family Mobile Devices (HA App)"]:::ui
     end
 
     CoreEngine --> Tablet

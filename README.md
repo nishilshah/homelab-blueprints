@@ -25,39 +25,45 @@ Each service in this repository is packaged into its own dedicated directory con
 
 ```mermaid
 flowchart TD
+    classDef host fill:#1e293b,stroke:#94a3b8,stroke-width:2px,color:#ffffff;
+    classDef storage fill:#047857,stroke:#34d399,stroke-width:2px,color:#ffffff;
+    classDef net fill:#b45309,stroke:#fbbf24,stroke-width:2px,color:#ffffff;
+    classDef lxc fill:#4338ca,stroke:#a5b4fc,stroke-width:2px,color:#ffffff;
+    classDef vm fill:#7c3aed,stroke:#c084fc,stroke-width:2px,color:#ffffff;
+
     subgraph Hypervisor ["Proxmox VE Hypervisor Node (pve)"]
-        direction TB
-        PVE["Proxmox VE Host (pve)<br/>Intel Core i7 (6C/12T) | 64GB RAM | Dual NVMe"]
+        PVE["🖥️ Proxmox VE Host (pve)<br/>Intel Core i7 | 64GB RAM | Dual NVMe"]:::host
         
         subgraph StorageCore ["Core Storage Engine"]
-            TrueNAS["VM 101: TrueNAS SCALE<br/>ZFS Mirror (8TB+ RAW)"]
+            TrueNAS["🗄️ VM 101: TrueNAS SCALE<br/>ZFS Mirror 8TB+ RAW Pool"]:::storage
         end
 
-        subgraph NetworkAccess ["Zero-Trust & Monitoring"]
-            Tailscale["LXC 103: Tailscale Gateway<br/>Subnet Router & Exit Node"]
-            Monitoring["LXC 105: Prometheus & Grafana<br/>Cluster Telemetry"]
+        subgraph NetworkAccess ["Zero-Trust & Telemetry"]
+            Tailscale["🛡️ LXC 103: Tailscale Gateway<br/>Subnet Router & Exit Node"]:::net
+            Monitoring["📊 LXC 105: Prometheus & Grafana<br/>Full Cluster Telemetry"]:::net
         end
 
-        subgraph CoreLXCs ["Debian 12 Application Containers"]
-            Immich["LXC 102: Immich Photos<br/>AI Face Recognition & Mobile Sync"]
-            Paperless["LXC 106: Paperless-ngx<br/>OCR Document Archive"]
-            N8N["LXC 107: n8n Automation<br/>Pipelines & Telegram Daemons"]
-            Firefly["LXC 109: Firefly III<br/>Double-Entry Family Ledger"]
-            Quant["LXC 108: Quant Trading<br/>OpenBB & TradingView Ingress"]
+        subgraph CoreLXCs ["Debian 12 Application Microservices"]
+            Immich["📷 LXC 102: Immich Photos<br/>AI Face Recognition & Sync"]:::lxc
+            Paperless["📄 LXC 106: Paperless-ngx<br/>OCR Document Archive"]:::lxc
+            N8N["⚡ LXC 107: n8n Automation<br/>Pipelines & Sysadmin Agent"]:::lxc
+            Firefly["💰 LXC 109: Firefly III<br/>Double-Entry Family Ledger"]:::lxc
+            Quant["📈 LXC 108: Quant Trading<br/>OpenBB & TradingView Ingress"]:::lxc
+            Flight["✈️ LXC 110: FlightScout AI<br/>Multi-City Fare Tracker"]:::lxc
         end
 
         subgraph DedicatedVMs ["Dedicated Virtual Machines"]
-            MediaStack["VM 100: Servarr Stack<br/>Jellyfin (4K QuickSync) + *Arr + Gluetun VPN"]
-            HA["VM 102: Home Assistant OS<br/>Smart Home Hub & Wall Tablets"]
+            MediaStack["🎬 VM 100: Servarr Stack<br/>Jellyfin 4K QSV + *Arr + Gluetun"]:::vm
+            HA["🏠 VM 102: Home Assistant OS<br/>Smart Home Hub & Wall Tablets"]:::vm
         end
     end
 
     TrueNAS -->|NFSv4 Mount| MediaStack
     TrueNAS -->|NFSv4 Mount| Immich
     TrueNAS -->|NFSv4 Mount| Paperless
-    Tailscale -.->|Zero-Trust Mesh| Hypervisor
-    Monitoring -.->|Scrapes Metrics| CoreLXCs
-    Monitoring -.->|Scrapes Metrics| DedicatedVMs
+    Tailscale -.->|Zero-Trust Remote Mesh| PVE
+    Monitoring -.->|Scrapes Telemetry| PVE
+    Monitoring -.->|Scrapes Telemetry| MediaStack
 ```
 
 ---
@@ -81,7 +87,8 @@ homelab-blueprints/
 │   ├── tailscale-gateway/                  <-- Subnet router LXC with TUN passthrough
 │   ├── monitoring-prometheus-grafana/      <-- Prometheus & Grafana telemetry
 │   ├── quant-trading-engine/               <-- OpenBB & TradingView alert ingress
-│   └── home-assistant/                     <-- HAOS smart home & tablet kiosk views
+│   ├── home-assistant/                     <-- HAOS smart home & tablet kiosk views
+│   └── flight-scout/                       <-- AI multi-city flight scanner & stopover tracker
 ├── scripts/                                <-- Automation & security scripts
 │   ├── deploy-lxc-template.sh              <-- 1-click Proxmox LXC provisioning
 │   └── sanitize-check.sh                   <-- Pre-commit credential leak scanner
@@ -107,6 +114,7 @@ homelab-blueprints/
 | **[Prometheus & Grafana](services/monitoring-prometheus-grafana/)** | Monitoring | Debian LXC | `3000`, `9090` | [Prometheus](https://prometheus.io) • [Grafana](https://grafana.com) • [Dashboards](https://grafana.com/grafana/dashboards) |
 | **[Quant Trading Engine](services/quant-trading-engine/)** | Finance | Debian LXC | `8080`, `4002` | [OpenBB](https://openbb.co) • [IBKR API](https://interactivebrokers.github.io) • [ib_insync](https://github.com/erdewit/ib_insync) |
 | **[Home Assistant](services/home-assistant/)** | Smart Home | KVM VM | `8123` | [Official Site](https://www.home-assistant.io) • [HACS](https://hacs.xyz) • [Fully Kiosk](https://www.fully-kiosk.com) |
+| **[FlightScout AI](services/flight-scout/)** | Travel & AI | Debian LXC | — | [Fast-Flights](https://github.com/Aidan-V/fast-flights) • [Google Gemini](https://ai.google.dev) • [Telegram Bot](https://core.telegram.org/bots) |
 
 ---
 

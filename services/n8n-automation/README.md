@@ -25,32 +25,42 @@ The central nervous system of the homelab: an enterprise-grade, node-based workf
 
 ```mermaid
 flowchart TD
+    classDef trigger fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
+    classDef relay fill:#b45309,stroke:#fbbf24,stroke-width:2px,color:#ffffff;
+    classDef workflow fill:#7c3aed,stroke:#c084fc,stroke-width:2px,color:#ffffff;
+    classDef action fill:#059669,stroke:#34d399,stroke-width:2px,color:#ffffff;
+
     subgraph Triggers ["1. Inbound Event Triggers"]
-        EmailPoll["IMAP Email Listener<br/>(Bank InfoAlerts & Utility Invoices)"]
-        CronTimer["Cron Schedules<br/>(Daily 8AM Health Check & Backups)"]
-        Webhooks["Internal Homelab Webhooks<br/>(Trading engine fills, ZFS alerts)"]
+        EmailPoll["📧 IMAP Email Listener<br/>Bank InfoAlerts & Utility Invoices"]:::trigger
+        CronTimer["⏰ Cron Schedules<br/>Daily 8AM Health Check & Backups"]:::trigger
+        Webhooks["🌐 Internal Homelab Webhooks<br/>Trading engine fills, ZFS alerts"]:::trigger
     end
 
-    subgraph LongPollingRelay ["2. Outbound Long-Polling Relay (Zero Inbound Ports)"]
-        TelegramCloud["Telegram Bot API Cloud Servers"]
-        RelayDaemon["telegram-relay.service (Python Daemon)<br/>Outbound HTTPS Long-Polling (timeout=30s)<br/>Bypasses residential NAT & Dynamic DNS"]
+    subgraph LongPollingRelay ["2. Outbound Long-Polling Relay - Zero Inbound Ports"]
+        TelegramCloud["☁️ Telegram Bot API Cloud Servers"]:::relay
+        RelayDaemon["🐍 telegram-relay.service Python Daemon<br/>Outbound HTTPS Long-Polling timeout=30s<br/>Bypasses residential NAT & Dynamic DNS"]:::relay
         
-        TelegramCloud <-->|Outbound HTTPS GET /getUpdates| RelayDaemon
+        TelegramCloud -->|Long-Polling Stream| RelayDaemon
+        RelayDaemon -->|Acknowledge Updates| TelegramCloud
     end
 
     subgraph n8nCore ["3. n8n Core Workflow Engine (LXC 107 - Port 5678)"]
+        WF_Bank["⚙️ Workflow 1: Banking Ingestion & Deduplication"]:::workflow
+        WF_Doc["⚙️ Workflow 2: Document Decryption & Ingestion"]:::workflow
+        WF_Admin["⚙️ Workflow 3: Proactive Sysadmin & Health Monitor"]:::workflow
+        
         RelayDaemon -->|Local POST /webhook/homelab-agent| WF_Admin
-        EmailPoll --> WF_Bank["Workflow 1: Banking Ingestion & Deduplication"]
-        EmailPoll --> WF_Doc["Workflow 2: Document Decryption & Ingestion"]
-        CronTimer --> WF_Admin["Workflow 3: Proactive Sysadmin & Health Monitor"]
+        EmailPoll --> WF_Bank
+        EmailPoll --> WF_Doc
+        CronTimer --> WF_Admin
         Webhooks --> WF_Admin
     end
 
     subgraph Actions ["4. Target Execution Destinations"]
-        Firefly["💰 Firefly III REST API (LXC 109)<br/>POST /api/v1/transactions"]
-        Paperless["📄 Paperless-ngx REST API (LXC 106)<br/>POST /api/documents/post_document/"]
-        PVE["🖥️ Proxmox VE API (Port 8006)<br/>Query LXC/VM metrics & issue reboots"]
-        TG_Alerts["📱 Authorized Admin Phone<br/>Interactive Telegram Action Cards"]
+        Firefly["💰 Firefly III REST API (LXC 109)<br/>POST /api/v1/transactions"]:::action
+        Paperless["📄 Paperless-ngx REST API (LXC 106)<br/>POST /api/documents/post_document/"]:::action
+        PVE["🖥️ Proxmox VE API (Port 8006)<br/>Query LXC/VM metrics & issue reboots"]:::action
+        TG_Alerts["📱 Authorized Admin Phone<br/>Interactive Telegram Action Cards"]:::action
     end
 
     WF_Bank --> Firefly

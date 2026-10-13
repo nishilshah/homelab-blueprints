@@ -26,36 +26,46 @@ A comprehensive, self-hosted observability, metrics scraping, and automated aler
 
 ```mermaid
 flowchart TD
+    classDef target fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
+    classDef prom fill:#b45309,stroke:#fbbf24,stroke-width:2px,color:#ffffff;
+    classDef grafana fill:#7c3aed,stroke:#c084fc,stroke-width:2px,color:#ffffff;
+    classDef alert fill:#991b1b,stroke:#f87171,stroke-width:2px,color:#ffffff;
+
     subgraph Targets ["1. Monitored Infrastructure & Exporters"]
-        PVE["Proxmox VE Hypervisor Host<br/>Node Exporter (Port 9100)"]
-        NAS["TrueNAS SCALE Storage Appliance<br/>ZFS Exporter & System Metrics (Port 9100)"]
-        DockerVM["VM 100: Media Stack & Docker<br/>cAdvisor (Port 8080) & Node Exporter"]
-        Trading["LXC 108: Quant Trading Engine<br/>FastAPI /metrics Endpoint (Port 8000)"]
+        PVE["🖥️ Proxmox VE Hypervisor<br/>Node Exporter (Port 9100)"]:::target
+        NAS["🗄️ TrueNAS SCALE Appliance<br/>ZFS Exporter & Metrics (Port 9100)"]:::target
+        DockerVM["🐳 VM 100: Media Stack & Docker<br/>cAdvisor & Node Exporter"]:::target
+        Trading["📈 LXC 108: Quant Trading Engine<br/>FastAPI /metrics (Port 8000)"]:::target
     end
 
     subgraph PrometheusCore ["2. Prometheus Monitoring Core (LXC 105 - Port 9090)"]
-        TSDB["Time-Series Database (TSDB)<br/>30-Day Retention | 15s Scrape Interval"]
-        ScrapeEngine["Prometheus Pull Engine<br/>HTTP GET /metrics endpoint pollers"]
-        Rules["Alert Rules Engine<br/>Threshold & Duration Evaluators"]
+        ScrapeEngine["⚡ Prometheus Pull Engine<br/>HTTP GET /metrics poller"]:::prom
+        TSDB[("💾 Time-Series Database TSDB<br/>30-Day Retention | 15s Interval")]:::prom
+        Rules["📏 Alert Rules Engine<br/>Threshold & Duration Evaluators"]:::prom
         
         ScrapeEngine --> TSDB
         TSDB --> Rules
     end
 
-    Targets -->|PromQL Pull Metrics| ScrapeEngine
+    PVE -->|PromQL Pull| ScrapeEngine
+    NAS -->|PromQL Pull| ScrapeEngine
+    DockerVM -->|PromQL Pull| ScrapeEngine
+    Trading -->|PromQL Pull| ScrapeEngine
 
     subgraph Visualization ["3. Grafana Visualization (Port 3000)"]
-        Dashboards["Live Dashboards:<br/>• Proxmox Cluster Overview (ID: 10045)<br/>• ZFS Pool I/O & Health (ID: 15307)<br/>• Docker Container Resource Usage (ID: 14282)"]
+        Dashboards["📊 Live Dashboards<br/>• Proxmox Cluster Overview (ID: 10045)<br/>• ZFS Pool I/O & Health (ID: 15307)<br/>• Docker Container Resource Usage (ID: 14282)"]:::grafana
     end
 
-    TSDB --> Visualization
+    TSDB --> Dashboards
 
     subgraph AlertPipeline ["4. Alert Routing & Notification"]
-        AM["Alertmanager (Port 9093)<br/>Debouncing & Deduplication"]
-        n8n["n8n Automation Engine (LXC 107)<br/>POST /webhook/homelab-agent"]
-        Telegram["📱 Telegram Sysadmin Bot (@homelab_bot)<br/>Instant Priority Notification with Action Buttons"]
+        AM["🛡️ Alertmanager (Port 9093)<br/>Debouncing & Deduplication"]:::alert
+        n8n["⚙️ n8n Automation Engine (LXC 107)<br/>POST /webhook/homelab-agent"]:::alert
+        Telegram["📱 Telegram Sysadmin Bot (@homelab_bot)<br/>Instant Priority Cards & Action Buttons"]:::alert
         
-        Rules -->|Fire Event| AM --> n8n --> Telegram
+        Rules -->|Fire Event| AM
+        AM --> n8n
+        n8n --> Telegram
     end
 ```
 

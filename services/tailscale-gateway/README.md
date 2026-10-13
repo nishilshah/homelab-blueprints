@@ -24,45 +24,52 @@ A dedicated, ultra-lightweight unprivileged Debian 12 LXC container functioning 
 
 ```mermaid
 flowchart TD
-    subgraph RemoteClients ["1. Remote Roaming Clients (Worldwide)"]
-        Phone["📱 iPhone / Android<br/>(Cellular 5G / Hotel Wi-Fi)"]
-        Laptop["💻 MacBook / Linux Laptop<br/>(Remote Coffee Shop / Office)"]
+    classDef client fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
+    classDef mesh fill:#7c3aed,stroke:#c084fc,stroke-width:2px,color:#ffffff;
+    classDef gateway fill:#b45309,stroke:#fbbf24,stroke-width:2px,color:#ffffff;
+    classDef homelan fill:#059669,stroke:#34d399,stroke-width:2px,color:#ffffff;
+
+    subgraph RemoteClients ["1. Remote Roaming Clients - Worldwide"]
+        Phone["📱 iPhone & Android<br/>Cellular 5G / Hotel Wi-Fi"]:::client
+        Laptop["💻 MacBook & Linux Laptop<br/>Remote Coffee Shop / Office"]:::client
     end
 
-    subgraph TailscaleMesh ["2. Encrypted Tailscale WireGuard Overlay (100.64.0.0/10)"]
-        DERP["Tailscale Global DERP Relay Mesh<br/>(NAT Traversal & Direct P2P Hole Punching)"]
-        Tunnel["Encrypted WireGuard Channel<br/>ChaCha20-Poly1305 Cipher"]
+    subgraph TailscaleMesh ["2. Encrypted Tailscale WireGuard Overlay - 100.64.0.0/10"]
+        DERP["🌐 Tailscale Global DERP Relay Mesh<br/>NAT Traversal & P2P STUN Punching"]:::mesh
+        Tunnel["🔒 Encrypted WireGuard Channel<br/>ChaCha20-Poly1305 Cipher"]:::mesh
         
-        DERP <--> Tunnel
+        DERP --- Tunnel
     end
 
-    RemoteClients <--> Tunnel
+    Phone --> Tunnel
+    Laptop --> Tunnel
 
     subgraph HomelabGateway ["3. Tailscale Gateway (LXC 103)"]
-        TUN["Host TUN Device Passthrough<br/>(/dev/net/tun | cgroup 10:200)"]
-        Forwarding["Linux Kernel IPv4/IPv6 Forwarding<br/>(net.ipv4.ip_forward = 1)"]
-        Router["Subnet Route Advertiser<br/>--advertise-routes=192.168.1.0/24<br/>--advertise-exit-node"]
+        TUN["🔌 Host TUN Device Passthrough<br/>/dev/net/tun cgroup 10:200"]:::gateway
+        Forwarding["⚙️ Linux Kernel IPv4/IPv6 Forwarding<br/>net.ipv4.ip_forward = 1"]:::gateway
+        Router["🛡️ Subnet Route Advertiser<br/>--advertise-routes=192.168.1.0/24<br/>--advertise-exit-node"]:::gateway
         
-        TUN --- Forwarding --- Router
+        TUN --> Forwarding
+        Forwarding --> Router
     end
 
-    Tunnel --> HomelabGateway
+    Tunnel --> Router
 
     subgraph HomeLAN ["4. Private Homelab Network (192.168.1.0/24)"]
-        PVE["🖥️ Proxmox VE Host (192.168.1.250:8006)"]
-        NAS["🗄️ TrueNAS SCALE (192.168.1.139)"]
-        FF["💰 Firefly III Finance (192.168.1.245)"]
-        Doc["📄 Paperless-ngx (192.168.1.246)"]
-        Media["🎬 Jellyfin Streaming (192.168.1.251:8096)"]
-        HA["🏠 Home Assistant (192.168.1.240:8123)"]
+        PVE["🖥️ Proxmox VE Host (192.168.1.250:8006)"]:::homelan
+        NAS["🗄️ TrueNAS SCALE (192.168.1.139)"]:::homelan
+        FF["💰 Firefly III Finance (192.168.1.245)"]:::homelan
+        Doc["📄 Paperless-ngx (192.168.1.246)"]:::homelan
+        Media["🎬 Jellyfin Streaming (192.168.1.251:8096)"]:::homelan
+        HA["🏠 Home Assistant (192.168.1.240:8123)"]:::homelan
     end
 
-    HomelabGateway --> PVE
-    HomelabGateway --> NAS
-    HomelabGateway --> FF
-    HomelabGateway --> Doc
-    HomelabGateway --> Media
-    HomelabGateway --> HA
+    Router --> PVE
+    Router --> NAS
+    Router --> FF
+    Router --> Doc
+    Router --> Media
+    Router --> HA
 ```
 
 ---

@@ -25,40 +25,57 @@ The bare-metal enterprise hypervisor foundation underpinning the entire homelab 
 
 ```mermaid
 flowchart TD
+    classDef bare fill:#334155,stroke:#94a3b8,stroke-width:2px,color:#ffffff;
+    classDef pve fill:#b45309,stroke:#fbbf24,stroke-width:2px,color:#ffffff;
+    classDef vm fill:#7c3aed,stroke:#c084fc,stroke-width:2px,color:#ffffff;
+    classDef lxc fill:#059669,stroke:#34d399,stroke-width:2px,color:#ffffff;
+
     subgraph BareMetal ["1. Physical Bare-Metal Server Hardware"]
-        CPU["Intel / AMD Multicore Host CPU<br/>(VT-x / AMD-V Enabled | IOMMU Active)"]
-        RAM["32GB - 64GB DDR4/DDR5 ECC/Non-ECC RAM"]
-        NVMe["Fast NVMe SSD: local-lvm (VM & LXC Root Disks)"]
-        HBA["SAS HBA / SATA Controller (Disks attached)"]
-        NIC["Gigabit / 2.5GbE Physical Network Interface"]
+        CPU["⚙️ Intel & AMD Multicore Host CPU<br/>VT-x / AMD-V Enabled | IOMMU Active"]:::bare
+        RAM["🧠 32GB - 64GB DDR4/DDR5 ECC/Non-ECC RAM"]:::bare
+        NVMe["⚡ Fast NVMe SSD: local-lvm<br/>VM & LXC Root Disks"]:::bare
+        HBA["🔌 SAS HBA / SATA Controller<br/>Disks Attached for Passthrough"]:::bare
+        NIC["🌐 Gigabit / 2.5GbE Physical Network Interface"]:::bare
     end
 
     subgraph ProxmoxHost ["2. Proxmox VE 8.2 Host OS (Debian 12 Kernel 6.8)"]
-        Bridge["Linux Network Bridge: vmbr0<br/>Internal Subnet: 192.168.1.0/24 | Gateway: 192.168.1.1"]
-        LVMThin["LVM-Thin Storage Driver (local-lvm)<br/>Instant Thin-Provisioning & Discard/TRIM"]
-        SubUID["User Namespace Mapper<br/>subuid / subgid (UID 100000 isolation)"]
+        Bridge["🌉 Linux Network Bridge: vmbr0<br/>Subnet: 192.168.1.0/24 | GW: 192.168.1.1"]:::pve
+        LVMThin["📦 LVM-Thin Storage Driver (local-lvm)<br/>Instant Thin-Provisioning & Discard/TRIM"]:::pve
+        SubUID["🔒 User Namespace Mapper<br/>subuid & subgid UID 100000 Isolation"]:::pve
     end
 
-    BareMetal --> ProxmoxHost
+    NIC --> Bridge
+    NVMe --> LVMThin
+    CPU --> SubUID
 
-    subgraph KVM_VMs ["3. Full KVM Virtual Machines (Hardware Emulation)"]
-        VM100["VM 100: Servarr Media Stack<br/>(Ubuntu 24.04 Docker | Intel QuickSync QSV)"]
-        VM101["VM 101: TrueNAS SCALE Storage<br/>(Dedicated Disk Controller Passthrough)"]
-        VM102["VM 102: Home Assistant OS<br/>(HAOS | USB Zigbee Dongle Passthrough)"]
+    subgraph KVM_VMs ["3. Full KVM Virtual Machines - Hardware Emulation"]
+        VM100["🎬 VM 100: Servarr Media Stack<br/>Ubuntu 24.04 Docker | Intel QuickSync QSV"]:::vm
+        VM101["🗄️ VM 101: TrueNAS SCALE Storage<br/>Dedicated Disk Controller Passthrough"]:::vm
+        VM102["🏠 VM 102: Home Assistant OS<br/>HAOS | USB Zigbee Dongle Passthrough"]:::vm
     end
 
-    subgraph LXC_Containers ["4. Unprivileged LXC Containers (Shared Host Kernel)"]
-        LXC102["LXC 102: Immich Photos (AI CLIP Engine)"]
-        LXC103["LXC 103: Tailscale Mesh Gateway (TUN Passthrough)"]
-        LXC105["LXC 105: Prometheus & Grafana Monitoring"]
-        LXC106["LXC 106: Paperless-ngx Document OCR"]
-        LXC107["LXC 107: n8n Automation & Sysadmin Agent"]
-        LXC108["LXC 108: Quant Research & Trading Ingress"]
-        LXC109["LXC 109: Firefly III Family Wealth Ledger"]
+    subgraph LXC_Containers ["4. Unprivileged LXC Containers - Shared Kernel"]
+        LXC102["📷 LXC 102: Immich Photos (AI CLIP Engine)"]:::lxc
+        LXC103["🛡️ LXC 103: Tailscale Mesh Gateway (TUN Passthrough)"]:::lxc
+        LXC105["📊 LXC 105: Prometheus & Grafana Monitoring"]:::lxc
+        LXC106["📄 LXC 106: Paperless-ngx Document OCR"]:::lxc
+        LXC107["⚡ LXC 107: n8n Automation & Sysadmin Agent"]:::lxc
+        LXC108["📈 LXC 108: Quant Research & Trading Ingress"]:::lxc
+        LXC109["💰 LXC 109: Firefly III Family Wealth Ledger"]:::lxc
+        LXC110["✈️ LXC 110: FlightScout AI Fare Tracker"]:::lxc
     end
 
-    ProxmoxHost --> KVM_VMs
-    ProxmoxHost --> LXC_Containers
+    Bridge --> VM100
+    Bridge --> VM101
+    Bridge --> VM102
+    Bridge --> LXC102
+    Bridge --> LXC103
+    Bridge --> LXC105
+    Bridge --> LXC106
+    Bridge --> LXC107
+    Bridge --> LXC108
+    Bridge --> LXC109
+    Bridge --> LXC110
 ```
 
 ---
