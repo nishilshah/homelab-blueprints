@@ -96,16 +96,49 @@ flowchart TD
     end
 ```
 
-### Detailed Strategy Rules:
-1. **Technical Trigger (PineScript):**
-   - **Long Entry:** Price touches lower Bollinger Band (20, 2) while 14-period RSI is oversold ($< 30$) and trading volume exceeds the 20-day moving average by 1.5x.
-   - **Exit Strategy:** Price crosses the 20-period SMA middle band or reaches an explicit Stop Loss / Take Profit target.
-2. **Fundamental Health Filter (OpenBB Platform):**
-   - Automatically rejects companies with extreme insolvency or balance sheet risk:
-     $$\text{Debt-to-Equity} < 2.0 \quad \text{and} \quad \text{Operating Cash Flow} > 0$$
-3. **AI Qualitative Verdict (Gemini Reasoning Node):**
-   - Synthesizes recent earnings results and technical alert context into a 2-sentence rationale with an explicit verdict: `FAVORABLE`, `NEUTRAL`, or `HIGH_RISK`.
-   - If marked `HIGH_RISK`, the Telegram alert is highlighted with warning icons to prevent blind trade approvals.
+### Detailed Strategy Architecture:
+
+The engine executes three complementary strategies in parallel:
+
+#### 1. Pillar 1: Sector ETF Dual Momentum (70% Target Allocation)
+- **Execution Interval:** First trading day of each month / weekly regime check.
+- **Macro Market Filter:** Verifies `SPY > 200-Day SMA`. If the macro market is in a downtrend (`SPY < 200-Day SMA`), the engine sits in 100% Cash / Treasury reserves.
+- **Universe:** 11 US Sector SPDR ETFs (`XLK`, `XLE`, `XLF`, `XLV`, `XLI`, `XLY`, `XLP`, `XLB`, `XLU`, `XLC`, `XLRE`).
+- **Momentum Scoring:** Blended 3-month (60%) and 6-month (40%) relative return:
+  $$\text{Score} = 0.6 \times R_{\text{3M}} + 0.4 \times R_{\text{6M}}$$
+- **Portfolio Construction:** Allocates capital evenly across the Top 2 highest-momentum sectors.
+- **Execution:** Submits limit orders with `tif="GTC"` (Good-Til-Cancelled) to ensure orders remain working across sessions without expiring at market close.
+
+#### 2. Pillar 2: Connors RSI(2) Dip Buying (30% Target Allocation)
+- **Execution Interval:** Daily scan at 2:00 PM UTC (pre-close / intraday).
+- **Universe:** Liquid S&P 100 mega-cap leaders (`NVDA`, `META`, `AAPL`, `MSFT`, `AMZN`, `GOOGL`, etc.).
+- **Long Entry Rule:**
+  $$\text{Price} > \text{200-Day SMA} \quad \text{and} \quad \text{Connors RSI(2)} \le 5.0$$
+  Identifies strong secular uptrend leaders undergoing temporary liquidity washouts.
+- **Exit Rule:**
+  $$\text{Price} \ge \text{5-Day SMA} \quad \text{or} \quad \text{Holding Period} \ge 5 \text{ Days}$$
+  Exits dynamically once the mean-reversion snapback occurs.
+
+#### 3. Pillar 3: TradingView Alert Webhook Ingress (Human-in-the-Loop)
+- **Technical Trigger (PineScript):**
+  - **Long Entry:** Price touches lower Bollinger Band (20, 2) while 14-period RSI is oversold ($< 30$) and trading volume exceeds the 20-day moving average by 1.5x.
+  - **Exit Strategy:** Price crosses the 20-period SMA middle band or reaches an explicit Stop Loss / Take Profit target.
+- **Fundamental Health Filter (OpenBB Platform):**
+  - Automatically rejects companies with extreme insolvency or balance sheet risk:
+    $$\text{Debt-to-Equity} < 2.0 \quad \text{and} \quad \text{Operating Cash Flow} > 0$$
+- **AI Qualitative Verdict (Gemini Reasoning Node):**
+  - Synthesizes recent earnings results and technical alert context into a 2-sentence rationale with an explicit verdict: `FAVORABLE`, `NEUTRAL`, or `HIGH_RISK`.
+- **Human Approval:** Dispatched to Telegram with interactive 2-step inline buttons and a 5-minute TTL.
+
+---
+
+## ⚡ Gateway Auto-Reconnection & Order Lifecycle
+
+The system incorporates robust production safeguards in `broker_router.py` and `fill_listener.py`:
+- **Active Socket Health & Auto-Reconnection:** Prior to querying settled cash, reading positions, or routing orders, `IBKRBroker.ensure_connected()` validates socket connectivity. If the connection dropped (e.g. during IBKR nightly maintenance), it automatically re-establishes a fresh session before submitting trades.
+- **No Silent Fallback:** Real broker orders are never silently downgraded to simulation fills if a temporary network hiccup occurs.
+- **Time-in-Force (`tif="GTC"`):** Systematic swing orders default to Good-Til-Cancelled (`GTC`) so they do not expire at 4:00 PM EDT on Day 1.
+- **Reconciliation Daemon:** Listens for IBKR trade status updates, logging immutable audit trails to SQLite WAL database and CRA/IRS-compliant CSV exports.
 
 ---
 
