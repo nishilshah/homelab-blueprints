@@ -101,23 +101,28 @@ flowchart TD
 The engine executes three complementary strategies in parallel:
 
 #### 1. Pillar 1: Sector ETF Dual Momentum (70% Target Allocation)
-- **Execution Interval:** First trading day of each month / weekly regime check.
-- **Macro Market Filter:** Verifies `SPY > 200-Day SMA`. If the macro market is in a downtrend (`SPY < 200-Day SMA`), the engine sits in 100% Cash / Treasury reserves.
+- **Execution Interval:** Bi-weekly on the 1st and 15th of each month at **09:45 AM America/New_York** (15 minutes after regular market open).
+  - *Weekend & Holiday Guard:* If the 1st or 15th falls on a weekend or NYSE market holiday, the rebalance automatically shifts to the **immediate next valid trading session** via `exchange_calendars`.
+- **Macro Market Filter:** Verifies `SPY >= 200-Day SMA`. If the macro market is in a downtrend (`SPY < 200-Day SMA`), the engine sits in 100% Cash / BIL Treasury reserves.
 - **Universe:** 11 US Sector SPDR ETFs (`XLK`, `XLE`, `XLF`, `XLV`, `XLI`, `XLY`, `XLP`, `XLB`, `XLU`, `XLC`, `XLRE`).
-- **Momentum Scoring:** Blended 3-month (60%) and 6-month (40%) relative return:
-  $$\text{Score} = 0.6 \times R_{\text{3M}} + 0.4 \times R_{\text{6M}}$$
-- **Portfolio Construction:** Allocates capital evenly across the Top 2 highest-momentum sectors.
-- **Execution:** Submits limit orders with `tif="GTC"` (Good-Til-Cancelled) to ensure orders remain working across sessions without expiring at market close.
+- **Momentum Scoring:** Multi-horizon weighted momentum:
+  $$\text{Score} = 0.40 \times R_{\text{1M}} + 0.30 \times R_{\text{3M}} + 0.30 \times R_{\text{6M}}$$
+- **Hysteresis Band (Anti-Whipsaw Churn Reduction):**
+  - **Eligible Entries:** Only sectors ranked in the **Top 2** (Rank #1 or #2) qualify for new purchases.
+  - **Retention Band:** Currently held positions are **retained** as long as they remain in the **Top 4** (Rank 1, 2, 3, or 4).
+  - **Rotation / Liquidation:** A sector is only liquidated if it drops below Rank 4 (Rank 5–11) or the macro regime turns defensive. This prevents costly whipsaw turnover when sectors oscillate around the Rank #2/#3 threshold.
+- **Execution:** Submits strict Limit Orders with `tif="DAY"`. Target allocation: 50% of Pillar 1 capital per sector (35% of total portfolio).
 
 #### 2. Pillar 2: Connors RSI(2) Dip Buying (30% Target Allocation)
-- **Execution Interval:** Daily scan at 2:00 PM UTC (pre-close / intraday).
-- **Universe:** Liquid S&P 100 mega-cap leaders (`NVDA`, `META`, `AAPL`, `MSFT`, `AMZN`, `GOOGL`, etc.).
+- **Execution Interval:** Daily pre-close scan at **03:45 PM America/New_York** (15 minutes before market close; or 15 minutes before early close on half-days).
+- **Universe:** Liquid S&P 100 mega-cap leaders (`NVDA`, `META`, `AAPL`, `MSFT`, `AMZN`, `GOOGL`, `AVGO`, `COST`, `JPM`, `V`, `LLY`, `UNH`, `GE`, `NFLX`).
 - **Long Entry Rule:**
-  $$\text{Price} > \text{200-Day SMA} \quad \text{and} \quad \text{Connors RSI(2)} \le 5.0$$
-  Identifies strong secular uptrend leaders undergoing temporary liquidity washouts.
+  $$\text{Price} > \text{200-Day SMA} \quad \text{and} \quad \text{Connors RSI(2)} < 10.0$$
+  Identifies strong secular uptrend leaders undergoing temporary liquidity washouts. Limit orders submitted with `tif="DAY"` (unfilled orders expire automatically at market close).
 - **Exit Rule:**
-  $$\text{Price} \ge \text{5-Day SMA} \quad \text{or} \quad \text{Holding Period} \ge 5 \text{ Days}$$
+  $$\text{Price} > \text{5-Day SMA} \quad \text{or} \quad \text{Holding Period} \ge 10 \text{ Days}$$
   Exits dynamically once the mean-reversion snapback occurs.
+- **Portfolio Sizing:** Up to 5 slots maximum, allocated 6% each ($6,000 max per position).
 
 #### 3. Pillar 3: TradingView Alert Webhook Ingress (Human-in-the-Loop)
 - **Technical Trigger (PineScript):**
@@ -133,12 +138,13 @@ The engine executes three complementary strategies in parallel:
 ---
 
 ## ⚡ Gateway Auto-Reconnection & Order Lifecycle
-
-The system incorporates robust production safeguards in `broker_router.py` and `fill_listener.py`:
 - **Active Socket Health & Auto-Reconnection:** Prior to querying settled cash, reading positions, or routing orders, `IBKRBroker.ensure_connected()` validates socket connectivity. If the connection dropped (e.g. during IBKR nightly maintenance), it automatically re-establishes a fresh session before submitting trades.
 - **No Silent Fallback:** Real broker orders are never silently downgraded to simulation fills if a temporary network hiccup occurs.
-- **Time-in-Force (`tif="GTC"`):** Systematic swing orders default to Good-Til-Cancelled (`GTC`) so they do not expire at 4:00 PM EDT on Day 1.
-- **Reconciliation Daemon:** Listens for IBKR trade status updates, logging immutable audit trails to SQLite WAL database and CRA/IRS-compliant CSV exports.
+- **Race Condition & Short-Selling Guard:** On every SELL order, the broker queries both held positions and active unfilled sell orders in `openTrades()`. If available net shares $\le 0$, the order is rejected with `ValueError: Prohibited naked short-sell`.
+- **Cash Over-Commitment Guard:** On every BUY order, pending unfilled buy orders and a $500 reserve buffer are subtracted from settled cash. Orders are automatically clamped to prevent margin borrowing.
+- **Crash Resilience & Idempotency:** The execution daemon persists last-run dates in SQLite (`daemon_schedule_state`). Service restarts never trigger duplicate executions or accidental trades.
+- **Daily Post-Close Order Cleaner (04:05 PM ET):** Reconciles unfilled DAY orders and purges stale state after regular market close.
+- **Fill Listener & Tax Ledger:** Monitored via `fill_listener.py`, supporting partial fills, full fills, and immutable logging to SQLite and CSV audit exports.
 
 ---
 
@@ -146,13 +152,15 @@ The system incorporates robust production safeguards in `broker_router.py` and `
 
 | Safeguard | Exact Rule / Logic | Purpose |
 | :--- | :--- | :--- |
-| **Trade Sizing Ceiling** | $\text{Order Value} \le \$500.00\text{ USD}$ | Limits maximum capital exposure per single trade |
-| **No Margin Borrowing** | $\text{Order Value} \le \text{Settled Cash}$ | Prevents borrowing fees, interest charges, or margin calls |
+| **Trade Sizing Ceiling** | $\text{Order Value} \le \$500.00\text{ USD}$ (Pillar 3) | Limits maximum capital exposure per manual TradingView alert |
+| **No Margin Borrowing** | $\text{Order Value} \le \text{Settled Cash} - \text{Committed Cash}$ | Prevents borrowing fees, interest charges, or margin calls |
 | **Order Type Enforcement**| **Strict Limit Orders ONLY** (`orderType='LMT'`) | Eliminates market order slippage during volatile opens |
-| **Limit Price Buffer** | $\text{Limit Price} = \text{Alert Price} \times 1.002$ | 0.2% price buffer guarantees fill without chasing |
+| **Limit Price Buffer** | $\text{Limit Price} = \text{Alert Price} \times 1.002$ (Buy) / $0.998$ (Sell) | Tight 0.2% price buffer guarantees execution without chasing |
+| **Hysteresis Band** | Top 2 Buy / Top 4 Retention Band | Eliminates whipsaw churn when sector ranks oscillate |
+| **Schedule Timezone** | `America/New_York` with `exchange_calendars` | Eliminates UTC midnight shifts and handles DST transitions |
 | **Alert Storm Debouncer** | Sliding window: Max 3 alerts per 60 seconds | Consolidates market open alert bursts into a single digest |
 | **Signal Freshness TTL** | 5-minute expiration timestamp | Prevents stale alerts from executing hours later |
-| **Sell Order Protection** | $\text{Sell Qty} \le \text{Current Long Position}$ | Prevents accidental naked short-selling |
+| **Sell Order Protection** | $\text{Sell Qty} \le \text{Current Long Position} - \text{Working Sells}$ | Prevents accidental naked short-selling & race conditions |
 | **Emergency Kill Switch** | Command `/kill` in Telegram | Immediately cancels all open orders and halts trading |
 
 ---
