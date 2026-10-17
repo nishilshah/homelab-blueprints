@@ -246,3 +246,46 @@ services:
     restart: unless-stopped
     networks:
       - servarr-net
+
+  # ==========================================
+  # Audiobook & Podcast Server (Audiobookshelf)
+  # ==========================================
+  audiobookshelf:
+    image: ghcr.io/advplyr/audiobookshelf:latest
+    container_name: audiobookshelf
+    environment:
+      - AUDIOBOOKSHELF_UID=1000
+      - AUDIOBOOKSHELF_GID=1000
+      - TZ=${TIMEZONE:-America/Vancouver}
+    volumes:
+      - ./config/audiobookshelf/config:/config
+      - ./config/audiobookshelf/metadata:/metadata
+      - ${STORAGE_PATH}/media/audiobooks:/data/media/audiobooks
+      - ${STORAGE_PATH}/media/podcasts:/data/media/podcasts
+    ports:
+      - "13378:80"
+    restart: unless-stopped
+    networks:
+      - servarr-net
+
+  # ==========================================
+  # Audiobook Discovery & Request Portal (AudiobookRequest)
+  # ==========================================
+  audiobookrequest:
+    image: markbeep/audiobookrequest:latest
+    container_name: audiobookrequest
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TIMEZONE:-America/Vancouver}
+      - ABR_APP__FORWARDED_ALLOW_IPS=*
+    volumes:
+      - ./config/audiobookrequest:/config
+      - ./audiobookrequest/prowlarr.py:/app/app/internal/prowlarr/prowlarr.py:ro
+      - ${STORAGE_PATH}/media/audiobooks:/data/media/audiobooks
+    ports:
+      - "8765:8000"
+    restart: unless-stopped
+    networks:
+      - servarr-net
+

@@ -224,13 +224,49 @@ For a family-shared media server where users request via Jellyseerr without admi
   3. Triggers an immediate API command (`MoviesSearch` / `SeriesSearch`) to automatically grab an alternative, working release.
   4. Alerts the admin on Telegram so family requests resolve invisibly and automatically.
 
-### 6. AudiobookRequest & Audiobookshelf Indexer & Category Standards
-* **Strict Category Isolation (`3030` Audio/Audiobook):**
-  - AudiobookRequest must only have category `3030` enabled under Settings > Prowlarr (`prowlarr_categories = [3030]`).
-  - Do NOT enable `7000` (Books) or `7020` (Books/EBook). Enabling general book categories causes indexers (e.g. The Pirate Bay, Knaben) to return `.epub`, `.mobi`, and `.pdf` files instead of genuine audiobooks.
-* **Indexer Compatibility:**
-  - Trackers such as **The Pirate Bay** and **Knaben** natively index category `3030` (`Audio/Audiobook`).
-  - Trackers like **LimeTorrents** do not maintain a distinct audiobook category and should be excluded from AudiobookRequest to prevent irrelevant search noise.
-* **Technical Books vs Fiction:**
-  - Technical engineering books, textbooks, and software manuals rarely have spoken audio releases seeded on public indexers. When searching for technical literature, zero audiobook releases will be returned, preventing accidental ebook downloads into the Audiobookshelf library.
+### 6. AudiobookRequest & Audiobookshelf Hybrid Indexing Architecture
+* **The Challenge:**
+  - Standard AudiobookRequest queries Prowlarr using exact Audible metadata titles (e.g., `Designing Data-Intensive Applications, 2nd Edition`).
+  - BitTorrent indexers frequently list releases under core titles (e.g. `Martin Kleppmann - Designing Data-Intensive Applications`) and tag releases under category `8000 (Other)` or general book categories rather than Torznab `3030 (Audiobook)`.
+  - Furthermore, technical manuals, classic literature, and older books often do not have an official audiobook edition. In default configurations, requests for these books fail completely with 0 sources found.
+
+* **Multi-Query Title Cleaning Engine (`clean_book_title`):**
+  - The search pipeline in `/app/app/internal/prowlarr/prowlarr.py` is patched with an intelligent regex normalizer:
+    ```python
+    def clean_book_title(title: str) -> str:
+        cleaned = re.sub(r'\s*\([^)]*\)', '', title)
+        cleaned = re.sub(r'([,:]|\s+-\s+)?\s*\b(?:\d+(?:st|nd|rd|th)?\s+ed(?:ition)?|unabridged|abridged|special edition)\b.*', '', cleaned, flags=re.IGNORECASE)
+        if ':' in cleaned:
+            main_title = cleaned.split(':')[0].strip()
+            if len(main_title) >= 3:
+                cleaned = main_title
+        return cleaned.strip()
+    ```
+  - For every requested book, AudiobookRequest issues concurrent queries for both the full title and the normalized title, deduplicating release GUIDs to maximize discovery across all trackers.
+
+* **Torznab Category Aggregation (`[3030, 7000, 7020, 8000]`):**
+  - Configured categories in `/config/db.sqlite`:
+    - `3030` (`Audio/Audiobook`): Native spoken audiobooks.
+    - `7000` (`Books`) & `7020` (`Books/EBook`): Electronic publication releases for fallback.
+    - `8000` (`Other`): Broad public indexers (TorrentsCSV, FileMood) that do not support specialized Torznab mapping.
+
+* **Automated Bitrate Ranking & EPUB Fallback Demotion:**
+  - AudiobookRequest automatically calculates bitrate as `8 * size / (runtime_seconds * 1000)`.
+  - **Audiobook Priority:** Genuine audiobooks (>20 kbps) pass validation, receive the green status badge, and are prioritized at the very top (Rank #1-4) for automatic downloads.
+  - **EPUB Fallback:** Small EPUB/PDF files (~0.5 kbps) fail the audio bitrate check and are demoted to the bottom of the table. If no audiobook release exists, the request never fails; instead, the EPUB sources remain available in the sources table for instant manual grab and reading.
+
+* **Broadened Indexer Coverage:**
+  - Active Prowlarr indexers configured in AudiobookRequest:
+    `[3, 4, 9, 10, 14, 17, 37, 49, 54]` (LimeTorrents, The Pirate Bay, Knaben, TorrentDownload, FileMood, TorrentsCSV, NoNaMe Club, Torrent9, Zamunda LIFE).
+
+* **Zero-Downtime Compose Persistence:**
+  - The Python engine patch is mounted read-only in `compose.yaml`:
+    ```yaml
+    volumes:
+      - ./audiobookrequest:/config
+      - ./audiobookrequest/prowlarr.py:/app/app/internal/prowlarr/prowlarr.py:ro
+      - /data:/data
+    ```
+  - This guarantees that container rebuilds and image pulls maintain multi-query deduplication and category fallback permanently.
+
 
