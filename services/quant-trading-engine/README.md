@@ -131,9 +131,35 @@ The engine executes three complementary strategies in parallel:
 - **Fundamental Health Filter (OpenBB Platform):**
   - Automatically rejects companies with extreme insolvency or balance sheet risk:
     $$\text{Debt-to-Equity} < 2.0 \quad \text{and} \quad \text{Operating Cash Flow} > 0$$
-- **AI Qualitative Verdict (Gemini Reasoning Node):**
-  - Synthesizes recent earnings results and technical alert context into a 2-sentence rationale with an explicit verdict: `FAVORABLE`, `NEUTRAL`, or `HIGH_RISK`.
 - **Human Approval:** Dispatched to Telegram with interactive 2-step inline buttons and a 5-minute TTL.
+
+---
+
+### 💬 Telegram Interactive Bot & Conversational Portfolio Assistant
+
+The Telegram Bot (`@quant_bot`, Chat ID Whitelist: `<AUTHORIZED_TELEGRAM_CHAT_ID>`) provides dual capabilities:
+
+#### 1. Automated Scheduled Status Digests (America/New_York)
+- **Pre-Market Morning Briefing (08:30 AM ET):** Delivers pre-market overview, exchange open/holiday status via `exchange_calendars`, overnight carry-over positions, settled cash, and planned scans for the session.
+- **Post-Market Daily Closing Digest (04:15 PM ET):** Dispatched immediately after market close, Pillar 2 scan, and stale order cleanup. Calculates closing mark-to-market valuations, realized/unrealized P&L by pillar, distance to 5-day SMA snapback targets, and day summary.
+- *On-Demand Triggers:* `/briefing` (morning status) and `/digest` (closing summary) can be requested anytime.
+
+#### 2. Natural Language Conversational Intelligence (Google Gemini)
+- Authorized trader can query the bot in plain natural English (e.g. _"How is NVDA doing?"_, _"What's our total profit today?"_, _"Why are we holding XLE and XLV?"_, _"How much cash is available?"_).
+- The bot injects live SQLite state, real-time quotes, settled cash, and active strategy rules into Gemini to generate institutional-grade answers.
+- **Strict Read-Only Guardrail:** Natural language chat CANNOT execute orders or move money. Order execution remains strictly automated via the quant engine daemons or gated by 2-step inline confirmation buttons.
+
+#### 3. Command Suite
+| Command | Description |
+| :--- | :--- |
+| `/digest` | Generate live full portfolio closing digest with P&L and pillar metrics |
+| `/briefing` | Generate live pre-market morning briefing |
+| `/status` | Query engine health, trading mode, settled cash, and kill switch state |
+| `/positions` | List open broker positions and share quantities |
+| `/pillars` | Breakdown automated holdings across Pillar 1 (30%) & Pillar 2 (70%) |
+| `/history` | View recent trade ledger execution audit trail |
+| `/kill` | Emergency trading halt: cancel all working orders and freeze ingress |
+| `/resume` | Disengage kill switch and resume normal paper trading operations |
 
 ---
 
