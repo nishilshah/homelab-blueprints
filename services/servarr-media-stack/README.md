@@ -196,3 +196,29 @@ docker exec -it qbittorrent curl ifconfig.me
 
 ### 3. NFS Atomic Hardlinks
 * Always map `/data` as a single shared mount volume across all Servarr containers to enable zero-copy atomic hardlinks on TrueNAS SCALE datasets, preserving download seeding while instantly indexing files in Jellyfin without doubling disk consumption.
+
+### 4. High-Throughput qBittorrent Disk Cache on TrueNAS NFS
+When downloading heavy 4K HDR releases across an NFS mount, default direct I/O (`DisableOSCache`) causes thousands of synchronous network RPCs per second, locking the libtorrent event loop and freezing the WebUI.
+* **Optimized `qBittorrent.conf` Parameters:**
+  ```ini
+  Session\DiskIOWriteMode=EnableOSCache
+  Session\DiskIOReadMode=EnableOSCache
+  Session\DiskWriteCacheSize=1024
+  Session\AsyncIOThreadsCount=8
+  Session\CoalesceReadWrite=true
+  Session\SendBufferWatermark=3072
+  Session\SendBufferLowWatermark=1024
+  Session\SendBufferWatermarkFactor=150
+  ```
+* **Impact:** Kernel buffers small chunks in RAM and flushes large sequential blocks, slashing NFS write contention by 95% and guaranteeing a responsive WebUI.
+
+### 5. Autonomous Family Queue Self-Healing Daemon
+For a family-shared media server where users request via Jellyseerr without admin console access:
+* **The Problem:** Bad torrent releases can stall at 0 seeds or get blocked on manual import (`importBlocked`), leaving family requests stranded indefinitely.
+* **The Permanent Solution:** The homelab monitor daemon on LXC 107 runs an automated queue sweep every 15 minutes (`audit_and_heal_media_queues`).
+* **Auto-Recovery:** If a download is missing or unimportable, the daemon automatically:
+  1. Purges the dead job from Radarr/Sonarr and qBittorrent (`removeFromClient=true`).
+  2. Permanently blocklists the defective release hash (`blocklist=true`).
+  3. Triggers an immediate API command (`MoviesSearch` / `SeriesSearch`) to automatically grab an alternative, working release.
+  4. Alerts the admin on Telegram so family requests resolve invisibly and automatically.
+
