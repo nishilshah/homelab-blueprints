@@ -100,7 +100,7 @@ flowchart TD
 
 The engine executes three complementary strategies in parallel:
 
-#### 1. Pillar 1: Sector ETF Dual Momentum (70% Target Allocation)
+#### 1. Pillar 1: Sector ETF Dual Momentum (30% Target Allocation)
 - **Execution Interval:** Bi-weekly on the 1st and 15th of each month at **09:45 AM America/New_York** (15 minutes after regular market open).
   - *Weekend & Holiday Guard:* If the 1st or 15th falls on a weekend or NYSE market holiday, the rebalance automatically shifts to the **immediate next valid trading session** via `exchange_calendars`.
 - **Macro Market Filter:** Verifies `SPY >= 200-Day SMA`. If the macro market is in a downtrend (`SPY < 200-Day SMA`), the engine sits in 100% Cash / BIL Treasury reserves.
@@ -111,9 +111,9 @@ The engine executes three complementary strategies in parallel:
   - **Eligible Entries:** Only sectors ranked in the **Top 2** (Rank #1 or #2) qualify for new purchases.
   - **Retention Band:** Currently held positions are **retained** as long as they remain in the **Top 4** (Rank 1, 2, 3, or 4).
   - **Rotation / Liquidation:** A sector is only liquidated if it drops below Rank 4 (Rank 5–11) or the macro regime turns defensive. This prevents costly whipsaw turnover when sectors oscillate around the Rank #2/#3 threshold.
-- **Execution:** Submits strict Limit Orders with `tif="DAY"`. Target allocation: 50% of Pillar 1 capital per sector (35% of total portfolio).
+- **Execution:** Submits strict Limit Orders with `tif="DAY"`. Target allocation: 50% of Pillar 1 capital per sector (15% of total portfolio, $15,000 per sector on $100k target).
 
-#### 2. Pillar 2: Connors RSI(2) Dip Buying (30% Target Allocation)
+#### 2. Pillar 2: Connors RSI(2) Dip Buying (70% Target Allocation)
 - **Execution Interval:** Daily pre-close scan at **03:45 PM America/New_York** (15 minutes before market close; or 15 minutes before early close on half-days).
 - **Universe:** Liquid S&P 100 mega-cap leaders (`NVDA`, `META`, `AAPL`, `MSFT`, `AMZN`, `GOOGL`, `AVGO`, `COST`, `JPM`, `V`, `LLY`, `UNH`, `GE`, `NFLX`).
 - **Long Entry Rule:**
@@ -122,7 +122,7 @@ The engine executes three complementary strategies in parallel:
 - **Exit Rule:**
   $$\text{Price} > \text{5-Day SMA} \quad \text{or} \quad \text{Holding Period} \ge 10 \text{ Days}$$
   Exits dynamically once the mean-reversion snapback occurs.
-- **Portfolio Sizing:** Up to 5 slots maximum, allocated 6% each ($6,000 max per position).
+- **Portfolio Sizing:** Up to 5 slots maximum, allocated 14% each ($14,000 max per position on $100k target).
 
 #### 3. Pillar 3: TradingView Alert Webhook Ingress (Human-in-the-Loop)
 - **Technical Trigger (PineScript):**
