@@ -106,8 +106,12 @@ Most self-hosted Telegram bots require configuring an inbound webhook:
 - **REST Ingestion:** Submits the file directly to Paperless-ngx REST API with pre-populated tags (`#Utilities`, `#Tax-2026`).
 
 ### Workflow 3: Proactive 24/7 Homelab Sysadmin Agent (`homelab-sysadmin-bot`)
-- **Schedule:** Triggers daily at 8:00 AM, or immediately on Prometheus Alertmanager webhook.
-- **Metrics Collection:** Queries Proxmox VE API (`/api2/json/nodes/pve/status`), TrueNAS ZFS pool status, and container uptime.
+- **Schedule:** 24/7 continuous audit daemon running every 180s (3 minutes), plus daily executive briefings at 8:00 AM.
+- **Metrics Collection:** Queries Proxmox VE API, TrueNAS ZFS pool status, container uptime, and core HTTP service endpoints.
+- **Resilient Health Check Parameters:**
+  - Standard REST/HTTP services: 5.0-second timeout.
+  - High-I/O Torrent Services (`qBittorrent`): Configured with a **15.0-second timeout** and an automatic **2-second retry mechanism** to prevent false-positive "service down" alerts during heavy 4K HDR network saturation and TrueNAS NFS flushing.
+- **Interactive Triage:** Supports natural-language commands via Telegram (`Fix <service>`, `Restart <service>`, `Check storage`, `Prune docker`).
 - **Actionable Digest:** Sends a formatted Markdown summary to Telegram with inline interactive buttons:
   ```text
   🟢 Proxmox Node: Online (CPU: 12% | RAM: 18.4 / 32 GB)

@@ -181,3 +181,18 @@ Confirm your public BitTorrent IP matches the VPN gateway, never your home ISP:
 ```bash
 docker exec -it qbittorrent curl ifconfig.me
 ```
+
+---
+
+## 🛠️ Operational Maintenance & Health Best Practices
+
+### 1. Download Client Hygiene & Path Mapping
+* **Inactive Download Clients:** If Usenet (`nzbget`) is not in use or has no active servers configured, keep it disabled (`enable: false`) in **Sonarr** and **Radarr** Settings > Download Clients. This eliminates false-positive `RemotePathMappingCheck` warnings regarding unmapped completed directories.
+* **VPN Service Dependency:** All torrent/download traffic strictly routes through the `gluetun` network container. If Gluetun restarts, child containers automatically pause traffic via Docker network namespace binding.
+
+### 2. Ghost Queue Reconciliation & Unpackerr Loop Prevention
+* **Stuck Downloads:** If a movie or episode is grabbed but blocked on manual import (e.g. `importBlocked`), **Unpackerr** checks the queue every 60 seconds and logs continuous extraction errors if the file is missing from `/data/downloads/qbittorrent/completed`.
+* **Remediation:** Remove stuck queue entries via the *Arr WebUI or REST API with `removeFromClient=true` to instantly release the torrent client and clear Unpackerr/qbit-manage error loops.
+
+### 3. NFS Atomic Hardlinks
+* Always map `/data` as a single shared mount volume across all Servarr containers to enable zero-copy atomic hardlinks on TrueNAS SCALE datasets, preserving download seeding while instantly indexing files in Jellyfin without doubling disk consumption.
