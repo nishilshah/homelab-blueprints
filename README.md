@@ -50,6 +50,7 @@ flowchart TD
             Firefly["💰 LXC 109: Firefly III<br/>Double-Entry Family Ledger"]:::lxc
             Quant["📈 LXC 108: Quant Trading<br/>OpenBB & TradingView Ingress"]:::lxc
             Flight["✈️ LXC 110: FlightScout AI<br/>Multi-City Fare Tracker"]:::lxc
+            Digest["📸 LXC 111: Family Photo Digest<br/>Vision AI Curation & Inline MIME"]:::lxc
         end
 
         subgraph DedicatedVMs ["Dedicated Virtual Machines"]
@@ -88,7 +89,8 @@ homelab-blueprints/
 │   ├── monitoring-prometheus-grafana/      <-- Prometheus & Grafana telemetry
 │   ├── quant-trading-engine/               <-- OpenBB & TradingView alert ingress
 │   ├── home-assistant/                     <-- HAOS smart home & tablet kiosk views
-│   └── flight-scout/                       <-- AI multi-city flight scanner & stopover tracker
+│   ├── flight-scout/                       <-- AI multi-city flight scanner & stopover tracker
+│   └── family-photo-digest/                <-- Vision AI monthly email newsletter & Immich curation
 ├── scripts/                                <-- Automation & security scripts
 │   ├── deploy-lxc-template.sh              <-- 1-click Proxmox LXC provisioning
 │   └── sanitize-check.sh                   <-- Pre-commit credential leak scanner
@@ -115,6 +117,7 @@ homelab-blueprints/
 | **[Quant Trading Engine](services/quant-trading-engine/)** | Finance | Debian LXC | `8080`, `4002` | [OpenBB](https://openbb.co) • [IBKR API](https://interactivebrokers.github.io) • [ib_insync](https://github.com/erdewit/ib_insync) |
 | **[Home Assistant](services/home-assistant/)** | Smart Home | KVM VM | `8123` | [Official Site](https://www.home-assistant.io) • [HACS](https://hacs.xyz) • [Fully Kiosk](https://www.fully-kiosk.com) |
 | **[FlightScout AI](services/flight-scout/)** | Travel & AI | Debian LXC | — | [Fast-Flights](https://github.com/Aidan-V/fast-flights) • [Google Gemini](https://ai.google.dev) • [Telegram Bot](https://core.telegram.org/bots) |
+| **[Family Photo Digest](services/family-photo-digest/)** | AI & Family | Debian LXC | — | [Google Gemini](https://ai.google.dev) • [Immich](https://immich.app) • [Telegram Bot](https://core.telegram.org/bots) |
 
 ---
 
