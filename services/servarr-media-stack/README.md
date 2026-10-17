@@ -131,6 +131,8 @@ In naive Docker tutorials, users commonly mount separate host paths:
 | `8686` | **Lidarr** | Local / Internal | Music collection manager |
 | `6767` | **Bazarr** | Local / Internal | Subtitle synchronization daemon |
 | `7474` | **Autobrr** | Local / Internal | Real-time IRC announce monitor |
+| `8765` | **AudiobookRequest** | Local / Tailscale | Family audiobook discovery & request portal |
+| `13378` | **Audiobookshelf** | Local / Tailscale | Self-hosted audiobook & podcast streaming server |
 
 ---
 
@@ -221,4 +223,14 @@ For a family-shared media server where users request via Jellyseerr without admi
   2. Permanently blocklists the defective release hash (`blocklist=true`).
   3. Triggers an immediate API command (`MoviesSearch` / `SeriesSearch`) to automatically grab an alternative, working release.
   4. Alerts the admin on Telegram so family requests resolve invisibly and automatically.
+
+### 6. AudiobookRequest & Audiobookshelf Indexer & Category Standards
+* **Strict Category Isolation (`3030` Audio/Audiobook):**
+  - AudiobookRequest must only have category `3030` enabled under Settings > Prowlarr (`prowlarr_categories = [3030]`).
+  - Do NOT enable `7000` (Books) or `7020` (Books/EBook). Enabling general book categories causes indexers (e.g. The Pirate Bay, Knaben) to return `.epub`, `.mobi`, and `.pdf` files instead of genuine audiobooks.
+* **Indexer Compatibility:**
+  - Trackers such as **The Pirate Bay** and **Knaben** natively index category `3030` (`Audio/Audiobook`).
+  - Trackers like **LimeTorrents** do not maintain a distinct audiobook category and should be excluded from AudiobookRequest to prevent irrelevant search noise.
+* **Technical Books vs Fiction:**
+  - Technical engineering books, textbooks, and software manuals rarely have spoken audio releases seeded on public indexers. When searching for technical literature, zero audiobook releases will be returned, preventing accidental ebook downloads into the Audiobookshelf library.
 
