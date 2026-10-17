@@ -41,22 +41,31 @@ async def _get_torrent_info_hash(
     client_session: ClientSession, download_url: str
 ) -> str | None:
     logger.debug("Fetching torrent info hash", download_url=download_url)
-    async with client_session.get(
-        download_url, headers={"User-Agent": USER_AGENT}
-    ) as r:
-        if not r.ok:
-            logger.error("Failed to fetch torrent", download_url=download_url)
-            return None
-        content = await r.read()
-        try:
-            tor = Torrent.read_stream(content)
-            return tor.infohash
-        except (MetainfoError, ReadError, BdecodeError) as e:
-            logger.error(
-                "Error reading torrent info hash",
-                download_url=download_url,
-                error=str(e),
-            )
+    try:
+        async with client_session.get(
+            download_url, headers={"User-Agent": USER_AGENT}, allow_redirects=False
+        ) as r:
+            if r.status in (301, 302, 303, 307, 308):
+                location = r.headers.get("Location", "")
+                if "xt=urn:btih:" in location:
+                    info_hash = location.split("xt=urn:btih:")[1].split("&")[0]
+                    return info_hash
+            if not r.ok:
+                logger.error("Failed to fetch torrent", download_url=download_url)
+                return None
+            content = await r.read()
+            try:
+                tor = Torrent.read_stream(content)
+                return tor.infohash
+            except (MetainfoError, ReadError, BdecodeError) as e:
+                logger.error(
+                    "Error reading torrent info hash",
+                    download_url=download_url,
+                    error=str(e),
+                )
+    except Exception as e:
+        logger.warning("Could not extract info hash from download_url", error=str(e))
+    return None
 
 
 async def start_download(
