@@ -1,0 +1,7 @@
+{
+  "abs_base_url": "http://172.39.0.10:80",
+  "abs_library_id": "<AUDIOBOOKSHELF_LIBRARY_ID>",
+  "abs_api_token": "<AUDIOBOOKSHELF_API_TOKEN>",
+  "library_target": "/data/books/audiobooks",
+  "log_file": "/config/logs/audiobook_import.log"
+}

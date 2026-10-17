@@ -269,4 +269,25 @@ For a family-shared media server where users request via Jellyseerr without admi
     ```
   - This guarantees that container rebuilds and image pulls maintain multi-query deduplication and category fallback permanently.
 
+### 7. Automated qBittorrent-to-Audiobookshelf Post-Processing Hook
+* **The Architectural Bridge:**
+  - AudiobookRequest acts as a discovery and request portal (analogous to Jellyseerr), delegating download tasks to Prowlarr and qBittorrent.
+  - While Radarr and Sonarr maintain active file import daemons for movies and TV, books and audiobooks lacked an automated post-download mover.
+  - Completed downloads sat staged in `/data/downloads/qbittorrent/completed`, isolated from Audiobookshelf's watched library directory at `/data/books/audiobooks`.
+
+* **Automated `[AutoRun]` Lifecycle:**
+  - Configured in `qBittorrent.conf` via the Web API:
+    ```ini
+    [AutoRun]
+    enabled=true
+    program=/config/scripts/audiobook_import.sh "%N" "%L" "%F"
+    ```
+  - **Zero-Latency Execution:** The millisecond qBittorrent finishes downloading a torrent, it fires the execution hook inside the container.
+  - **Category Isolation:** Immediately ignores downloads tagged under `radarr`, `sonarr`, or `lidarr`.
+  - **Extension Detection:** Scans the content path for audio (`.m4b`, `.mp3`, `.flac`, `.aac`) and book files (`.epub`, `.pdf`), along with artwork (`.jpg`, `.png`).
+  - **Zero-Copy Atomic Hardlinking:** Links media files from `/data/downloads/qbittorrent/completed/...` into `/data/books/audiobooks/<TorrentName>/`, preserving disk space and active torrent seeding.
+  - **Instant Library Sync:** Dispatches an authenticated HTTP POST request to the Audiobookshelf REST API (`POST http://172.39.0.10:80/api/libraries/{lib_id}/scan`), making new audiobooks immediately playable in the Audiobookshelf web and mobile clients.
+  - **Audit Logging:** Logs all import events and API responses to `/config/logs/audiobook_import.log`.
+
+
 
