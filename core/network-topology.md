@@ -43,12 +43,15 @@ flowchart TD
                 Immich["📷 LXC 102: Immich Photos<br/>192.168.1.252"]:::lxc
                 Monitor["📊 LXC 105: Monitoring<br/>192.168.1.249"]:::lxc
                 Flight["✈️ LXC 110: FlightScout AI<br/>192.168.1.244"]:::lxc
+                Digest["📸 LXC 111: Family Digest<br/>192.168.1.243"]:::lxc
+                AdGuard["🛡️ LXC 112: AdGuard Home<br/>192.168.1.242"]:::lxc
+                NPM["🌐 LXC 113: Nginx Proxy Mgr<br/>192.168.1.240"]:::lxc
             end
 
             subgraph VMs ["Virtual Machines"]
                 TrueNAS["🗄️ VM 101: TrueNAS SCALE<br/>192.168.1.139"]:::vm
                 Servarr["🎬 VM 100: Servarr Docker<br/>192.168.1.251"]:::vm
-                HA["🏠 VM 102: Home Assistant<br/>192.168.1.240"]:::vm
+                HA["🏠 VM 105: Home Assistant<br/>192.168.1.72"]:::vm
             end
 
             vmbr0 --> TS
@@ -59,6 +62,9 @@ flowchart TD
             vmbr0 --> Immich
             vmbr0 --> Monitor
             vmbr0 --> Flight
+            vmbr0 --> Digest
+            vmbr0 --> AdGuard
+            vmbr0 --> NPM
             vmbr0 --> TrueNAS
             vmbr0 --> Servarr
             vmbr0 --> HA
@@ -87,12 +93,15 @@ flowchart TD
 | `192.168.1.252` | `immich.homelab.local` | LXC 102 | Immich Photo & Video Cloud |
 | `192.168.1.253` | `tailscale.homelab.local` | LXC 103 | Tailscale Subnet Router & Mesh Gateway |
 | `192.168.1.249` | `monitoring.homelab.local`| LXC 105 | Prometheus & Grafana Telemetry |
-| `192.168.1.240` | `homeassistant.homelab.local`| VM 102 | Home Assistant OS (HAOS) Smart Hub |
+| `192.168.1.72`  | `homeassistant.homelab.local`| VM 105 | Home Assistant OS (HAOS) Smart Hub |
 | `192.168.1.246` | `paperless.homelab.local` | LXC 106 | Paperless-ngx OCR Document Archive |
 | `192.168.1.247` | `n8n.homelab.local` | LXC 107 | n8n Workflow Engine & Telegram AI Bot |
 | `192.168.1.248` | `quant.homelab.local` | LXC 108 | OpenBB & TradingView Ingress Webhook |
 | `192.168.1.245` | `firefly.homelab.local` | LXC 109 | Firefly III Wealth & Budgeting Platform |
 | `192.168.1.244` | `flightscout.homelab.local` | LXC 110 | FlightScout AI Multi-City Fare Engine |
+| `192.168.1.243` | `familydigest.homelab.local`| LXC 111 | Family Photo Digest AI Newsletter |
+| `192.168.1.242` | `adguard.homelab.local` | LXC 112 | AdGuard Home DoH DNS & Ad-Blocking |
+| `192.168.1.240` | `proxy.homelab.local` | LXC 113 | Nginx Proxy Manager Reverse Proxy Gateway |
 
 ---
 
