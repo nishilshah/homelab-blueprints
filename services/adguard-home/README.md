@@ -67,11 +67,19 @@ flowchart TD
 1. **AdGuard Base Filter:** Official ad-blocking rule list (`filter_1.txt`, ~188,000 rules)
 2. **AdGuard Tracking Protection Filter:** Privacy and telemetric tracker blocker (`filter_3.txt`, ~3,500 rules)
 3. **OISD Big Filter:** Comprehensive malware, telemetry, and tracking filter (`https://big.oisd.nl`, ~233,000 rules)
+4. **HaGeZi Multi PRO:** Community gold standard ad/tracker blocker (`https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.txt`, ~190,000 rules)
+5. **HaGeZi Threat Intelligence Feeds (TIF):** Real-time phishing, ransomware, and malicious C2 blocker (`https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/tif.txt`)
 
 ### 3. Local Wildcard DNS Rewrites
 All queries under the `.homelab.local` namespace route directly to the Nginx Proxy Manager gateway:
 - `*.homelab.local` $\rightarrow$ `192.168.1.240`
 - `homelab.local` $\rightarrow$ `192.168.1.240`
+
+### 4. Local Network & Device Management
+- **Private Reverse DNS (PTR):** Configured to query router gateway (`192.168.1.254`) so client device hostnames appear cleanly in AdGuard query logs instead of raw IPs.
+- **Apple iCloud Private Relay Local Suppression:** Blocks `mask.icloud.com` and `mask-h2.icloud.com` on the home Wi-Fi network, ensuring iOS and macOS devices fall back to AdGuard Home blocking rather than bypassing it via Apple's encrypted relay.
+- **Query Log Retention:** Capped at `7 days` to prevent disk bloat on the 4 GB container root disk.
+- **AdGuard Browsing Security:** Enabled real-time domain threat intelligence inspection.
 
 ---
 
