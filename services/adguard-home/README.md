@@ -75,6 +75,20 @@ All queries under the `.homelab.local` namespace route directly to the Nginx Pro
 
 ---
 
+## ⚡ High-Throughput Performance Tuning
+
+To prevent browser stalls, rate-limit drops, and latency on modern web apps (e.g. GitHub, Airtable, SaaS platforms):
+
+| Setting | Value | Rationale |
+| :--- | :---: | :--- |
+| **`ratelimit`** | `0` | Disables query rate limiting. Default (`20/s`) causes browsers bursting 30-50 queries on rich pages to be dropped. |
+| **`upstream_mode`** | `parallel` | Queries all upstreams concurrently (DoH + DoT), serving the fastest response (<15ms). |
+| **`cache_optimistic`** | `true` | Serves cached records immediately while refreshing expired entries in background. |
+| **`cache_ttl_min`** | `300` (5m) | Overrides ultra-low CDN TTLs (5s-30s) to eliminate redundant external round-trips. |
+| **`cache_size`** | `16 MB` | Expands in-memory DNS cache capacity for multi-device households. |
+
+---
+
 ## 🛠️ Verification & Maintenance Commands
 
 ```bash
@@ -87,4 +101,8 @@ dig @192.168.1.242 photos.homelab.local +short
 # Verify ad domain sinkhole
 dig @192.168.1.242 pagead2.googlesyndication.com +short
 # Expected output: 0.0.0.0
+
+# Measure lookup latency for external sites
+dig @192.168.1.242 github.com +stats
 ```
+
