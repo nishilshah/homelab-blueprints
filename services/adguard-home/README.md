@@ -104,5 +104,17 @@ dig @192.168.1.242 pagead2.googlesyndication.com +short
 
 # Measure lookup latency for external sites
 dig @192.168.1.242 github.com +stats
+
+# Run the Top 500 Domains Benchmark against AdGuard
+python3 services/adguard-home/scripts/test-top500-dns.py --count 500
 ```
+
+---
+
+## 📊 Top 500 Benchmark Performance
+* **Throughput**: ~2,000 queries/sec (cached) / ~450 queries/sec (fresh parallel resolution)
+* **Average DNS Latency**: ~6 ms (cached) / ~13 ms median (fresh)
+* **DNS Drop/Timeout Rate**: **0.0%** (0 / 500 queries timed out)
+* **Tracker & Ad Blocking**: Automatically sinkholes ~8.6% of the world's top domains (e.g., `doubleclick.net`, `google-analytics.com`, `googletagmanager.com`, `scorecardresearch.com`).
+
 
