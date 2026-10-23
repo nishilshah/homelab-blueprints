@@ -363,3 +363,66 @@ flowchart TD
 * **Unified Telegram Visibility:**
   - `/pillars`, `/digest`, and conversational Gemini queries inspect `status IN ('OPEN', 'PENDING_EXIT')`, displaying an explicit `⏳ (Exit Pending)` badge for orders in flight rather than hiding them.
 
+---
+
+## 🛡️ Production Hardening & Pre-Trade Risk Architecture (Phase 1 & Phase 2)
+
+To safely deploy real capital, the engine operates under a defensive, fail-closed multi-layered architecture:
+
+```mermaid
+flowchart TD
+    classDef blue fill:#2563EB,stroke:#1D4ED8,stroke-width:2px,color:#fff;
+    classDef red fill:#DC2626,stroke:#B91C1C,stroke-width:2px,color:#fff;
+    classDef amber fill:#D97706,stroke:#B45309,stroke-width:2px,color:#fff;
+    classDef emerald fill:#059669,stroke:#047857,stroke-width:2px,color:#fff;
+    classDef slate fill:#475569,stroke:#334155,stroke-width:2px,color:#fff;
+
+    Signal["⚡ Strategy Signal (P1 / P2)"]:::slate
+    RiskCheck{"🛡️ Pre-Trade Risk Firewall"}:::blue
+    Abort["⛔ Order Aborted & Telegram Alert"]:::red
+    PreCommit["💾 Phase 1: Write PENDING_SUBMIT"]:::amber
+    BrokerSend["📤 Phase 2: Dispatch to IBKR (ClientId 1)"]:::emerald
+    BrokerAck{"Broker Ack?"}:::blue
+    StateOpen["🟢 Mark OPEN / PENDING_EXIT"]:::emerald
+    StateFail["⚠️ Mark SUBMISSION_FAILED"]:::red
+
+    Signal --> RiskCheck
+    RiskCheck -- "Violation (Cap / Collar / Kill-Switch)" --> Abort
+    RiskCheck -- "Compliant" --> PreCommit
+    PreCommit --> BrokerSend
+    BrokerSend --> BrokerAck
+    BrokerAck -- "Success" --> StateOpen
+    BrokerAck -- "Error / Timeout" --> StateFail
+```
+
+### 1. Architectural Safeguards Deployed (Phase 1)
+* **Pre-Trade Risk Firewall (`risk_engine.py`):**
+  - **Single-Order Notional Ceiling:** Hard cap of \$15,000 USD per trade.
+  - **Price Deviation Collar:** Orders deviating > 5% from previous close are automatically rejected to guard against bad data or fat-finger ticks.
+  - **Kill-Switch Guard:** Reads `system_state.kill_switch_active` before any order dispatch.
+  - **Short-Selling Prevention:** Strictly validates broker position availability before submitting SELL limit orders.
+* **Fail-Closed Order Router (`broker_router.py`):**
+  - Silent simulation fallback is permanently disabled (`simulation_fallback=False`).
+  - Network timeouts or gateway drops raise explicit `BrokerConnectionError` or `BrokerExecutionError`, preventing phantom order execution.
+* **Dual Client ID Socket Isolation (`quant_orchestrator.py`):**
+  - **`clientId=1` (Execution):** Dedicated exclusively to `AutonomousQuantDaemon` and `FillListenerDaemon`.
+  - **`clientId=2` (Telemetry):** Dedicated exclusively to `TelegramTradingBot` for user commands (`/digest`, `/pillars`).
+  - Completely eliminates socket deadlocks and `Error 326: clientId already in use` collisions.
+* **Two-Phase Commit State Machine:**
+  - Writes `PENDING_SUBMIT` to SQLite *before* transmitting the packet to IBKR.
+  - Upon startup, automatically reconciles orphaned `PENDING_SUBMIT` records against broker holdings to prevent duplicate orders.
+* **Thread Supervisor & Watchdog Heartbeat:**
+  - Background supervisor monitors thread liveness (`is_alive()`) across all 5 workers. If a thread dies, it alerts Telegram and exits with non-zero code to trigger systemd clean restart.
+  - Actively updates `system_state.last_heartbeat` with source `WATCHDOG` every 30 seconds.
+
+### 2. Automated Fault Injection & Regression Verification (Phase 2)
+The automated test runner (`test_phase2_fault_injection.py`) runs 16 comprehensive assertions:
+- **Suite 1: Pre-Trade Risk Firewall:** Caps, collars, negative inputs, compliant approvals, kill-switch engagement & recovery.
+- **Suite 2: Fail-Closed Broker Router:** Negative price rejection, zero mock order generation.
+- **Suite 3: Client ID Isolation:** Concurrent queries across `clientId=91` and `clientId=92`.
+- **Suite 4: Two-Phase Commit:** Pre-commit persistence and crash recovery of orphaned orders.
+- **Suite 5: Process Watchdog:** SQLite heartbeat freshness and `WATCHDOG` source verification.
+
+**Verification Status:** `16 PASSED, 0 FAILED (0.44s execution time)` in container LXC 108.
+
+
