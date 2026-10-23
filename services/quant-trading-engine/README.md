@@ -425,4 +425,12 @@ The automated test runner (`test_phase2_fault_injection.py`) runs 16 comprehensi
 
 **Verification Status:** `16 PASSED, 0 FAILED (0.44s execution time)` in container LXC 108.
 
+### 3. Broker Position Reconciliation & Discretionary Stub Guard
+* **Enhanced `/positions` Command:**
+  - Cross-references real-time broker holdings (`ib.positions()`) against SQLite `automated_portfolio_state`.
+  - Automatically classifies holdings into **Pillar 1: Sector Momentum**, **Pillar 2: Connors RSI-2 Mean Reversion**, and **Unmanaged / Discretionary Stubs**.
+  - Highlights discrepancies immediately if unmanaged stocks or test stubs exist in the brokerage account.
+* **Extended-Hours Stub Liquidation:**
+  - Added `outside_rth` parameter to `broker_router.py` with unique client ID order naming (`IB-{clientId}-{orderId}`), ensuring fail-closed pre-trade risk checks and clean execution across both regular and extended trading sessions.
+
 
