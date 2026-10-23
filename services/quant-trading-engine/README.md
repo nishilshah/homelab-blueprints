@@ -313,3 +313,53 @@ flowchart LR
      "strategy": "MeanReversion_1H"
    }
    ```
+
+---
+
+## 🔄 State Synchronization & Order Lifecycle Resilience
+
+To prevent desynchronization between IBKR broker positions and the internal SQLite database (`automated_portfolio_state`), the system implements a strict two-phase commit and order reconciliation loop:
+
+### 1. Order Execution & State Machine
+
+```mermaid
+flowchart TD
+    classDef blue fill:#2563EB,stroke:#1D4ED8,stroke-width:2px,color:#fff;
+    classDef amber fill:#D97706,stroke:#B45309,stroke-width:2px,color:#fff;
+    classDef purple fill:#7C3AED,stroke:#6D28D9,stroke-width:2px,color:#fff;
+    classDef emerald fill:#059669,stroke:#047857,stroke-width:2px,color:#fff;
+    classDef red fill:#DC2626,stroke:#B91C1C,stroke-width:2px,color:#fff;
+    classDef slate fill:#475569,stroke:#334155,stroke-width:2px,color:#fff;
+
+    Open["🟢 OPEN Position"]:::emerald
+    SubmitExit["📤 Submit Exit LMT Order (TIF=DAY)"]:::amber
+    PendingExit["⏳ PENDING_EXIT"]:::purple
+    FillEvent{"Broker Fill Event?"}:::blue
+    OrderExpired{"4:00 PM Close / Expired?"}:::slate
+    Closed["🔴 CLOSED"]:::red
+    RevertOpen["🔄 Revert to OPEN"]:::emerald
+
+    Open --> SubmitExit
+    SubmitExit --> PendingExit
+    PendingExit --> FillEvent
+    FillEvent -- "Filled (SELL Confirmed)" --> Closed
+    FillEvent -- "Unfilled" --> OrderExpired
+    OrderExpired -- "Broker Holds Shares" --> RevertOpen
+    OrderExpired -- "Broker Shares Sold" --> Closed
+```
+
+### 2. Safeguards & Protections
+* **Zero Premature State Closure:**
+  - Positions are never marked `CLOSED` upon placing an order. Instead, they transition to `PENDING_EXIT`.
+  - While in `PENDING_EXIT`, candidate evaluators treat the slot as occupied (`status IN ('OPEN', 'PENDING_EXIT')`), preventing phantom buys or double allocation.
+* **Real-Time Execution Postback (`fill_listener.py`):**
+  - Actively polls IBKR working orders every 3 seconds.
+  - On `Filled` execution for a `SELL`: transitions `automated_portfolio_state` to `CLOSED` and appends an immutable record to the CRA/IRS tax audit CSV.
+  - On `Cancelled`/`Inactive` for a `SELL` with 0 filled shares: immediately reverts status from `PENDING_EXIT` back to `OPEN`.
+* **Post-Market Automated Reconciliation (`clean_stale_orders()` at 4:05 PM ET):**
+  - Authoritatively compares `automated_portfolio_state` against live broker holdings (`broker.get_positions()`).
+  - If a `PENDING_EXIT` order expired unfilled at 4:00 PM ET close, it verifies the shares remain held in IBKR and safely reverts the database row to `OPEN`.
+  - If a `BUY` order expired unfilled at close without executing, it flags the row as `CANCELLED_UNFILLED` so capital is unlocked for the next trading day.
+* **Unified Telegram Visibility:**
+  - `/pillars`, `/digest`, and conversational Gemini queries inspect `status IN ('OPEN', 'PENDING_EXIT')`, displaying an explicit `⏳ (Exit Pending)` badge for orders in flight rather than hiding them.
+
