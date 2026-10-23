@@ -433,4 +433,56 @@ The automated test runner (`test_phase2_fault_injection.py`) runs 16 comprehensi
 * **Extended-Hours Stub Liquidation:**
   - Added `outside_rth` parameter to `broker_router.py` with unique client ID order naming (`IB-{clientId}-{orderId}`), ensuring fail-closed pre-trade risk checks and clean execution across both regular and extended trading sessions.
 
+---
+
+## 📈 Long-Horizon Backtest: Current Live Engine (2015 - 2026 YTD)
+
+Comprehensive 11.8-year historical simulation evaluating the exact production quantitative configuration:
+* **Target Capital Allocation:** 30% Pillar 1 (Sector Dual Momentum) / 70% Pillar 2 (Mega-Cap Connors RSI-2).
+* **Execution & Friction:** Real-time pre-close fills (`fast_info`), \$1.00 IBKR commission per trade, 5 bps slippage.
+* **Exit Protocol:** 5-Day SMA snapback or 10-day time-stop horizon (no premature disaster stop).
+
+### 1. Macro Performance Comparison (2015-01-01 to 2026-10-23)
+
+| Metric | Current Live Engine (30/70) | 50/50 Balanced | 70/30 Defensive | SPY Benchmark |
+| :--- | :---: | :---: | :---: | :---: |
+| **Initial Capital** | \$100,000 | \$100,000 | \$100,000 | \$100,000 |
+| **Final Portfolio Equity** | **\$459,902.23** | \$350,723.93 | \$262,834.93 | \$448,975.63 |
+| **Total Return** | **+359.90%** | +250.72% | +162.83% | +348.98% |
+| **CAGR** | **13.82%** | 11.23% | 8.54% | 13.59% |
+| **Maximum Drawdown** | **-21.80%** | -22.56% | -28.01% | **-33.72%** |
+| **Sharpe Ratio (\(R_f=2.0\%\))** | **0.80** | 0.65 | 0.46 | 0.66 |
+| **Sortino Ratio** | **0.98** | 0.79 | 0.55 | N/A |
+| **Calmar Ratio** | **0.63** | 0.50 | 0.31 | 0.40 |
+| **Annualized Volatility** | **14.76%** | 14.11% | 14.12% | 17.50% |
+
+### 2. Annual Returns Breakdown vs SPY
+
+| Year | Current Live Engine (30/70) | SPY Benchmark | Alpha vs SPY |
+| :---: | :---: | :---: | :---: |
+| **2015** | **+15.10%** | +1.29% | **+13.82%** |
+| **2016** | +3.24% | +12.00% | -8.76% |
+| **2017** | **+24.01%** | +21.71% | **+2.30%** |
+| **2018** | -8.91% | -4.57% | -4.34% |
+| **2019** | +15.43% | +31.22% | -15.79% |
+| **2020** | **+21.40%** | +18.33% | **+3.06%** |
+| **2021** | +21.05% | +28.73% | -7.68% |
+| **2022** | **+3.95%** | **-18.18%** | **+22.12%** |
+| **2023** | +23.10% | +26.18% | -3.08% |
+| **2024** | **+26.40%** | +24.89% | **+1.51%** |
+| **2025** | +6.63% | +17.72% | -11.09% |
+| **2026 YTD** | **+17.13%** | +12.32% | **+4.81%** |
+
+### 3. Pillar 2 Trade Execution Statistics (2,680 Trades)
+* **Win Rate:** **70.26%** (7 out of 10 trades profitable)
+* **Profit Factor:** **1.45**
+* **Average Holding Duration:** **3.2 trading days**
+* **Average Winning Trade:** **+1.67%** | **Average Losing Trade:** **-2.65%**
+* **Top Contributors:** AVGO (+\$41.5k), MSFT (+\$39.2k), NVDA (+\$36.0k), META (+\$30.2k), GE (+\$29.5k), NFLX (+\$21.6k), AAPL (+\$21.3k).
+
+### 4. Historical Crisis Stress Tests
+* **2018 Trade War & Tech Selloff:** Drawdown held to **-15.08%** vs SPY -19.80%.
+* **2020 COVID Crash:** Maximum drawdown held to **-21.80%** vs SPY **-33.72%** (+12% capital preservation).
+* **2022 Fed Rate Hiking Bear Market:** Drawdown held to **-10.73%** and full-year return **+3.95%** vs SPY **-18.18%** (**+22.12% Alpha** via macro regime cash gating).
+
 
