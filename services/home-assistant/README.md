@@ -163,7 +163,25 @@ qm start 102
 ```
 
 ### 4. Complete Onboarding
-1. Navigate to `http://192.168.1.240:8123` in your browser.
+1. Navigate to `http://192.168.1.72:8123` in your browser.
 2. Follow the onboarding wizard to create the primary home administrator account.
 3. Install the **Mosquitto MQTT** and **Zigbee2MQTT** add-ons from the Add-on Store.
 4. Begin pairing sensors and configuring local automations!
+
+---
+
+## 🧹 Smart Appliance Integrations: Tineco Vacuum & Floor Washer
+
+The homelab integrates smart floor care appliances via the **Tineco Custom Component** (`custom_components/tineco` based on `wheeller123/Tineco-Integration`):
+
+- **Supported Appliances:** Tineco FLOOR ONE S-Series (including S6, S6 PRO, S6 PRO EXTREME, S5, S3, and Carpet One).
+- **Architecture & Protocol:** Cloud-polling integration interfacing with the Tineco IoT API.
+- **Telemetry & Exposed Entities:**
+  - `sensor.tineco_battery_percentage`: Real-time state of charge (SoC).
+  - `binary_sensor.tineco_is_charging`: Active charging dock indicator.
+  - `binary_sensor.tineco_waste_water_tank_full`: Dirty water tank full alarm.
+  - `binary_sensor.tineco_clean_water_tank_empty`: Fresh water refill notification.
+  - `sensor.tineco_cleaning_mode`: Operational state (Auto, Max, Suction, Self-Cleaning, Drying).
+  - `switch.tineco_mute_audio`: Toggle device voice/audio announcements.
+- **Automations Enabled:** Tablet dashboard alerts for empty clean water / full dirty water tanks, voice reminders when cleaning is finished but roller self-cleaning has not run, and battery health tracking.
+
