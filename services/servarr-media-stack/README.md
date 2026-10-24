@@ -289,5 +289,12 @@ For a family-shared media server where users request via Jellyseerr without admi
   - **Instant Library Sync:** Dispatches an authenticated HTTP POST request to the Audiobookshelf REST API (`POST http://172.39.0.10:80/api/libraries/{lib_id}/scan`), making new audiobooks immediately playable in the Audiobookshelf web and mobile clients.
   - **Audit Logging:** Logs all import events and API responses to `/config/logs/audiobook_import.log`.
 
-
-
+### 8. Jellyseerr Automated TV Routing & Sonarr Parity
+* **Jellyseerr Default Server Configuration:**
+  - For user requests submitted through the Jellyseerr portal to automatically dispatch without manual intervention, backend servers must be explicitly declared as default (`"isDefault": true`).
+  - Previously, Radarr was configured as default, but Sonarr was missing the default flag (`"isDefault": false`). User TV series requests succeeded at the UI layer (`status: 2`), but retained `serverId: null`, silently failing to dispatch to Sonarr.
+  - **Resolution:** Configured `PUT /api/v1/settings/sonarr/0` with `"isDefault": true` and `"syncEnabled": true`. Reprocessed stalled requests, ensuring immediate, hands-free dispatch.
+* **Sonarr Category Parity in `qbit-manage`:**
+  - Sonarr defaults its download category in qBittorrent to `tv-sonarr`.
+  - Added `tv-sonarr` alongside `sonarr` and `radarr` under both `cat:` (`tv-sonarr: /data/downloads/qbittorrent/completed`) and `nohardlinks:` (`tv-sonarr:`) in `/docker/servarr/qbit-manage/config.yml`.
+  - Both Movie and TV pipelines now maintain 100% operational parity: zero-copy atomic hardlinks on TrueNAS NFS, isolated Gluetun WireGuard VPN networking, TRaSH custom format synchronization via Recyclarr, and automated Emby/Jellyfin library refresh hooks.
