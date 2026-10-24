@@ -89,7 +89,6 @@ homelab-blueprints/
 │   ├── monitoring-prometheus-grafana/      <-- Prometheus & Grafana telemetry
 │   ├── quant-trading-engine/               <-- OpenBB & TradingView alert ingress
 │   ├── home-assistant/                     <-- HAOS smart home & tablet kiosk views
-│   ├── flight-scout/                       <-- AI multi-city flight scanner & stopover tracker
 │   ├── family-photo-digest/                <-- Vision AI monthly email newsletter & Immich curation
 │   ├── adguard-home/                       <-- Network-wide DoH DNS, ad-blocking & wildcard rewrites
 │   └── nginx-proxy-manager/                <-- Reverse proxy gateway & local domain SSL termination
@@ -118,7 +117,6 @@ homelab-blueprints/
 | **[Prometheus & Grafana](services/monitoring-prometheus-grafana/)** | Monitoring | Debian LXC | `3000`, `9090` | [Prometheus](https://prometheus.io) • [Grafana](https://grafana.com) • [Dashboards](https://grafana.com/grafana/dashboards) |
 | **[Quant Trading Engine](services/quant-trading-engine/)** | Finance | Debian LXC | `8080`, `4002` | [OpenBB](https://openbb.co) • [IBKR API](https://interactivebrokers.github.io) • [ib_insync](https://github.com/erdewit/ib_insync) |
 | **[Home Assistant](services/home-assistant/)** | Smart Home | KVM VM | `8123` | [Official Site](https://www.home-assistant.io) • [HACS](https://hacs.xyz) • [Fully Kiosk](https://www.fully-kiosk.com) |
-| **[FlightScout AI](services/flight-scout/)** | Travel & AI | Debian LXC | — | [Fast-Flights](https://github.com/Aidan-V/fast-flights) • [Google Gemini](https://ai.google.dev) • [Telegram Bot](https://core.telegram.org/bots) |
 | **[Family Photo Digest](services/family-photo-digest/)** | AI & Family | Debian LXC | — | [Google Gemini](https://ai.google.dev) • [Immich](https://immich.app) • [Telegram Bot](https://core.telegram.org/bots) |
 | **[AdGuard Home](services/adguard-home/)** | Network & DNS | Debian LXC | `53`, `80` | [Official Site](https://adguard.com/adguard-home.html) • [GitHub](https://github.com/AdguardTeam/AdGuardHome) • [Wiki](https://github.com/AdguardTeam/AdGuardHome/wiki) |
 | **[Nginx Proxy Manager](services/nginx-proxy-manager/)** | Reverse Proxy | Docker LXC | `80`, `443`, `81` | [Official Site](https://nginxproxymanager.com) • [Docs](https://nginxproxymanager.com/guide/) • [GitHub](https://github.com/NginxProxyManager/nginx-proxy-manager) |
