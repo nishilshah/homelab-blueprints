@@ -122,6 +122,7 @@ homelab-blueprints/
 | **[AdGuard Home](services/adguard-home/)** | Network & DNS | Debian LXC | `53`, `80` | [Official Site](https://adguard.com/adguard-home.html) • [GitHub](https://github.com/AdguardTeam/AdGuardHome) • [Wiki](https://github.com/AdguardTeam/AdGuardHome/wiki) |
 | **[Nginx Proxy Manager](services/nginx-proxy-manager/)** | Reverse Proxy | Docker LXC | `80`, `443`, `81` | [Official Site](https://nginxproxymanager.com) • [Docs](https://nginxproxymanager.com/guide/) • [GitHub](https://github.com/NginxProxyManager/nginx-proxy-manager) |
 | **[TradingAgents Sandbox](services/trading-agents-paper/)** | AI & Finance | Debian LXC | `4002` (IBKR) | [Paper (arXiv:2412.20138)](https://arxiv.org/abs/2412.20138) • [GitHub](https://github.com/TauricResearch/TradingAgents) |
+| **[openGym Tracker](services/opengym/)** | Health & Fitness | Docker LXC | `8080`, `8443` (TLS) | [GitHub](https://github.com/DuarteSantos8/openGym) • [Docs](https://opengym.ch) |
 
 ---
 

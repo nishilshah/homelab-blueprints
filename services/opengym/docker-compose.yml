@@ -1,0 +1,27 @@
+name: opengym
+
+services:
+  # Passkey authentication + per-user local storage
+  api:
+    image: ghcr.io/duartesantos8/opengym-api:latest
+    container_name: opengym-api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - PORT=${PORT:-3000}
+      - DATA_DIR=/data
+      - TRUST_PROXY=${TRUST_PROXY:-1}
+    volumes:
+      - ./data:/data
+      - ./coach-auth:/coach-auth
+
+  # React SPA Frontend + Nginx Reverse Proxy
+  web:
+    image: ghcr.io/duartesantos8/opengym-web:latest
+    container_name: opengym-web
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - "${WEB_PORT:-8080}:${NGINX_PORT:-80}"
