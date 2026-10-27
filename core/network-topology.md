@@ -42,7 +42,7 @@ flowchart TD
                 Firefly["💰 LXC 109: Firefly III<br/>192.168.1.245"]:::lxc
                 Immich["📷 LXC 102: Immich Photos<br/>192.168.1.252"]:::lxc
                 Monitor["📊 LXC 105: Monitoring<br/>192.168.1.249"]:::lxc
-                Flight["✈️ LXC 110: FlightScout AI<br/>192.168.1.244"]:::lxc
+                TradingAgents["🤖 LXC 110: TradingAgents AI<br/>192.168.1.244"]:::lxc
                 Digest["📸 LXC 111: Family Digest<br/>192.168.1.243"]:::lxc
                 AdGuard["🛡️ LXC 112: AdGuard Home<br/>192.168.1.242"]:::lxc
                 NPM["🌐 LXC 113: Nginx Proxy Mgr<br/>192.168.1.240"]:::lxc
@@ -61,7 +61,7 @@ flowchart TD
             vmbr0 --> Firefly
             vmbr0 --> Immich
             vmbr0 --> Monitor
-            vmbr0 --> Flight
+            vmbr0 --> TradingAgents
             vmbr0 --> Digest
             vmbr0 --> AdGuard
             vmbr0 --> NPM
@@ -98,7 +98,7 @@ flowchart TD
 | `192.168.1.247` | `n8n.homelab.local` | LXC 107 | n8n Workflow Engine & Telegram AI Bot |
 | `192.168.1.248` | `quant.homelab.local` | LXC 108 | OpenBB & TradingView Ingress Webhook |
 | `192.168.1.245` | `firefly.homelab.local` | LXC 109 | Firefly III Wealth & Budgeting Platform |
-| `192.168.1.244` | `flightscout.homelab.local` | LXC 110 | FlightScout AI Multi-City Fare Engine |
+| `192.168.1.244` | `trading-agents.homelab.local`| LXC 110 | TauricResearch Multi-Agent Trading Sandbox |
 | `192.168.1.243` | `familydigest.homelab.local`| LXC 111 | Family Photo Digest AI Newsletter |
 | `192.168.1.242` | `adguard.homelab.local` | LXC 112 | AdGuard Home DoH DNS & Ad-Blocking |
 | `192.168.1.240` | `proxy.homelab.local` | LXC 113 | Nginx Proxy Manager Reverse Proxy Gateway |

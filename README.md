@@ -49,7 +49,7 @@ flowchart TD
             N8N["⚡ LXC 107: n8n Automation<br/>Pipelines & Sysadmin Agent"]:::lxc
             Firefly["💰 LXC 109: Firefly III<br/>Double-Entry Family Ledger"]:::lxc
             Quant["📈 LXC 108: Quant Trading<br/>OpenBB & TradingView Ingress"]:::lxc
-            Flight["✈️ LXC 110: FlightScout AI<br/>Multi-City Fare Tracker"]:::lxc
+            TradingAgents["🤖 LXC 110: TradingAgents AI<br/>Multi-Agent LLM Debate & Paper Sandbox"]:::lxc
             Digest["📸 LXC 111: Family Photo Digest<br/>Vision AI Curation & Inline MIME"]:::lxc
         end
 
@@ -91,7 +91,8 @@ homelab-blueprints/
 │   ├── home-assistant/                     <-- HAOS smart home & tablet kiosk views
 │   ├── family-photo-digest/                <-- Vision AI monthly email newsletter & Immich curation
 │   ├── adguard-home/                       <-- Network-wide DoH DNS, ad-blocking & wildcard rewrites
-│   └── nginx-proxy-manager/                <-- Reverse proxy gateway & local domain SSL termination
+│   ├── nginx-proxy-manager/                <-- Reverse proxy gateway & local domain SSL termination
+│   └── trading-agents-paper/               <-- TauricResearch Multi-Agent LLM Trading Intelligence Sandbox
 ├── scripts/                                <-- Automation & security scripts
 │   ├── deploy-lxc-template.sh              <-- 1-click Proxmox LXC provisioning
 │   └── sanitize-check.sh                   <-- Pre-commit credential leak scanner
@@ -120,6 +121,7 @@ homelab-blueprints/
 | **[Family Photo Digest](services/family-photo-digest/)** | AI & Family | Debian LXC | — | [Google Gemini](https://ai.google.dev) • [Immich](https://immich.app) • [Telegram Bot](https://core.telegram.org/bots) |
 | **[AdGuard Home](services/adguard-home/)** | Network & DNS | Debian LXC | `53`, `80` | [Official Site](https://adguard.com/adguard-home.html) • [GitHub](https://github.com/AdguardTeam/AdGuardHome) • [Wiki](https://github.com/AdguardTeam/AdGuardHome/wiki) |
 | **[Nginx Proxy Manager](services/nginx-proxy-manager/)** | Reverse Proxy | Docker LXC | `80`, `443`, `81` | [Official Site](https://nginxproxymanager.com) • [Docs](https://nginxproxymanager.com/guide/) • [GitHub](https://github.com/NginxProxyManager/nginx-proxy-manager) |
+| **[TradingAgents Sandbox](services/trading-agents-paper/)** | AI & Finance | Debian LXC | `4002` (IBKR) | [Paper (arXiv:2412.20138)](https://arxiv.org/abs/2412.20138) • [GitHub](https://github.com/TauricResearch/TradingAgents) |
 
 ---
 
