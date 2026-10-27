@@ -485,4 +485,14 @@ Comprehensive 11.8-year historical simulation evaluating the exact production qu
 * **2020 COVID Crash:** Maximum drawdown held to **-21.80%** vs SPY **-33.72%** (+12% capital preservation).
 * **2022 Fed Rate Hiking Bear Market:** Drawdown held to **-10.73%** and full-year return **+3.95%** vs SPY **-18.18%** (**+22.12% Alpha** via macro regime cash gating).
 
+---
+
+## 🛡️ Broker-Truth Portfolio Reconciliation & Zero-Ghost Architecture
+
+To guarantee 100% synchronization between Telegram digests and actual broker holdings:
+1. **Live Broker As Single Source of Truth:** `generate_portfolio_digest()` queries `broker.get_portfolio_details()` directly via IB Gateway (`ib.portfolio()`). Holdings, shares, average cost basis, and unrealized P&L are taken directly from the broker session rather than theoretical estimates.
+2. **Order Lifecycle Gating:** Orders placed during the 3:45 PM ET pre-close scan enter SQLite with status `SUBMITTED`. They are only promoted to `OPEN` upon confirmed broker fill.
+3. **Auto-Reconciliation of Expired Limit Orders:** If day limit orders expire unfilled at 4:00 PM close, the daily reconciliation sweeps any zero-share positions to `CANCELLED_UNFILLED` so phantom positions never appear in briefings.
+4. **Non-Blocking SQLite Concurrency:** SQLite WAL mode with 30-second busy timeout (`PRAGMA busy_timeout = 30000; PRAGMA synchronous = NORMAL;`) and immediate connection closing around broker I/O prevents transaction lock contention.
+
 
