@@ -64,6 +64,10 @@ To enable secure access both at home and while at the gym:
    - `FIRST_USER_ADMIN=1`: The first registered account gains full administrative rights.
    - `INVITE_ONLY=1`: Public sign-ups are blocked. New user profiles require a cryptographic invite link generated from the admin panel.
    - `ALLOW_GUEST=0`: Disables unauthenticated local guest mode to ensure all workout data persists in per-user profiles.
+4. **AI Coach Integration (Google Gemini):**
+   - Configured with the homelab's high-performance **Google Gemini API** (`gemini-2.5-flash`).
+   - Instance-wide AI capability enabled for workout debriefs, progression recommendations, and custom routine generation.
+   - Secure encrypted credential vault stored locally in `/data/coach.json` (`chmod 600`).
 
 ---
 
