@@ -133,7 +133,6 @@ In naive Docker tutorials, users commonly mount separate host paths:
 | `7474` | **Autobrr** | Local / Internal | Real-time IRC announce monitor |
 | `8765` | **AudiobookRequest** | Local / Tailscale | Family audiobook discovery & request portal |
 | `13378` | **Audiobookshelf** | Local / Tailscale | Self-hosted audiobook & podcast streaming server |
-| `5001` | **Dockge** | Local / Tailscale | Centralized Docker Compose & Stack Management UI |
 
 ---
 
@@ -299,9 +298,3 @@ For a family-shared media server where users request via Jellyseerr without admi
   - Sonarr defaults its download category in qBittorrent to `tv-sonarr`.
   - Added `tv-sonarr` alongside `sonarr` and `radarr` under both `cat:` (`tv-sonarr: /data/downloads/qbittorrent/completed`) and `nohardlinks:` (`tv-sonarr:`) in `/docker/servarr/qbit-manage/config.yml`.
   - Both Movie and TV pipelines now maintain 100% operational parity: zero-copy atomic hardlinks on TrueNAS NFS, isolated Gluetun WireGuard VPN networking, TRaSH custom format synchronization via Recyclarr, and automated Emby/Jellyfin library refresh hooks.
-
-### 9. Centralized Stack Management with Dockge (Port 5001)
-* **Architecture:** Deployed Dockge (`louislam/dockge:1`) hosted directly inside `/docker/dockge` on VM 100 with `/var/run/docker.sock` mounted and `DOCKGE_STACKS_DIR=/docker`.
-* **Zero Lock-In:** Rather than using a proprietary container database, Dockge directly manages native `compose.yaml` files on disk across `/docker/servarr` and other stacks.
-* **Auto-Discovery & Upgrades:** Provides an interactive web UI with real-time container states, live terminal logs, upstream image digest update notifications, and 1-click `compose pull && compose up -d` execution.
-* **Multi-Host Extensibility:** Supports connecting remote Dockge agents across other LXCs (Immich, Paperless, Firefly) into a single unified sidebar dashboard.
