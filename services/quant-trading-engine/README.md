@@ -191,8 +191,10 @@ The Telegram Bot (`@quant_bot`, Chat ID Whitelist: `<AUTHORIZED_TELEGRAM_CHAT_ID
 | :--- | :--- | :--- |
 | **Trade Sizing Ceiling** | $\text{Order Value} \le \$500.00\text{ USD}$ (Pillar 3) | Limits maximum capital exposure per manual TradingView alert |
 | **No Margin Borrowing** | $\text{Order Value} \le \text{Settled Cash} - \text{Committed Cash}$ | Prevents borrowing fees, interest charges, or margin calls |
-| **Order Type Enforcement**| **Strict Limit Orders ONLY** (`orderType='LMT'`) | Eliminates market order slippage during volatile opens |
+| **Order Type Enforcement**| **Strict Limit Orders & MOC** (`orderType='LMT' / 'MOC'`) | Limit orders for entries/rebalances; Market-on-Close (`MOC`) for daily mean-reversion exits to eliminate closing cross auction misses |
 | **Limit Price Buffer** | $\text{Limit Price} = \text{Alert Price} \times 1.002$ (Buy) / $0.998$ (Sell) | Tight 0.2% price buffer guarantees execution without chasing |
+| **Mean-Reversion Exits (MOC)** | Official Exchange Closing Cross (`MOC`) submitted at 15:45 ET | 100% fill rate at official closing print; eliminates unfilled limit order overnight drag |
+| **Portfolio Source of Truth** | Real-Time Broker Session (`IBKRBroker.get_portfolio_details()`) | SQLite mirrors exact broker-settled holdings, eliminating database-broker drift |
 | **Hysteresis Band** | Top 2 Buy / Top 4 Retention Band | Eliminates whipsaw churn when sector ranks oscillate |
 | **Schedule Timezone** | `America/New_York` with `exchange_calendars` | Eliminates UTC midnight shifts and handles DST transitions |
 | **Alert Storm Debouncer** | Sliding window: Max 3 alerts per 60 seconds | Consolidates market open alert bursts into a single digest |
