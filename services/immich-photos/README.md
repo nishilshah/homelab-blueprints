@@ -1,8 +1,8 @@
 # 📸 Immich Family Photo & AI Media Hub (LXC 102)
 
-[![Immich](https://img.shields.io/badge/Immich-v1.118+-E24A8D?style=for-the-badge&logo=googlephotos&logoColor=white)](https://immich.app)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16_pgvector-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
-[![Redis](https://img.shields.io/badge/Redis-7_Cache-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io)
+[![Immich](https://img.shields.io/badge/Immich-v3.3.5-E24A8D?style=for-the-badge&logo=googlephotos&logoColor=white)](https://immich.app)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14_VectorChord-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://github.com/tensorchord/VectorChord)
+[![Valkey](https://img.shields.io/badge/Valkey-9_Cache-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://valkey.io)
 [![Machine Learning](https://img.shields.io/badge/Machine_Learning-CLIP_&_InsightFace-FF6F00?style=for-the-badge&logo=python&logoColor=white)](https://immich.app/docs/features/ml-hardware-acceleration)
 [![License: AGPLv3](https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=for-the-badge)](https://www.gnu.org/licenses/agpl-3.0)
 
