@@ -177,3 +177,22 @@ docker compose up -d
 2. Complete the initial administrator registration.
 3. Download the **Immich mobile app** on iOS or Android.
 4. Connect using your local/Tailscale IP (`http://192.168.1.252:2283`) and enable background photo backup.
+
+---
+
+## 🌐 Public Album Sharing & Contributor Uploads (Tailscale Funnel)
+
+To allow friends and family outside your home network to view shared albums, download original media, and upload photos directly from their phone browsers without requiring an account or VPN:
+
+1. **Configure External Domain in Immich:**
+   * Go to **Administration (Gear Icon)** $\rightarrow$ **Settings** $\rightarrow$ **Server Settings**.
+   * Set **External Domain** to: `https://<GATEWAY_TAILSCALE_DOMAIN>`.
+   * Immich will automatically use this public URL for all generated share links instead of the local IP.
+2. **Expose Ingress via Tailscale Funnel:**
+   * Handled transparently by `tailscale-gateway` (LXC 103) routing `https://<GATEWAY_TAILSCALE_DOMAIN>/` to `http://192.168.1.252:2283`.
+3. **Generate Public Shared Link:**
+   * Open any Album $\rightarrow$ tap **Share** $\rightarrow$ **Create Link**.
+   * Toggle **Allow Upload** to **ON** (enables guest photo submissions).
+   * Toggle **Allow Download** to **ON**.
+   * Copy the generated HTTPS link and send to friends.
+

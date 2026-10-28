@@ -180,3 +180,21 @@ tailscale up \
 3. Toggle on **`192.168.1.0/24`** under Subnet routes.
 4. (Optional) Toggle on **Use as exit node**.
 5. Test connecting from your mobile phone on 5G: navigate to `http://192.168.1.250:8006` or `http://192.168.1.245` — instant local access without opening a single port!
+
+---
+
+## 🌐 Public Ingress & Tailscale Funnel Configuration
+
+The gateway exposes selected services securely to the public internet using **Tailscale Funnel** without opening ports on the home router:
+
+| Public URL Path | Target Backend | Service | Public Access Mode |
+| :--- | :--- | :--- | :--- |
+| `https://<GATEWAY_DOMAIN>/` | `http://192.168.1.252:2283` | **Immich Photo Hub** | Public Funnel (guest shared album viewing & uploads) |
+| `https://<GATEWAY_DOMAIN>/webhook/tradingview` | `http://192.168.1.248:8080/webhook/tradingview` | **Quant Ingress Service** | Public Funnel (TradingView alert ingest) |
+
+```bash
+# Configure path-based serve and funnel ingress:
+tailscale serve --yes --bg --https=443 --set-path=/webhook/tradingview http://192.168.1.248:8080/webhook/tradingview
+tailscale funnel --yes --bg --https=443 --set-path=/ http://192.168.1.252:2283
+```
+
