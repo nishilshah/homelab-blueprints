@@ -56,12 +56,14 @@ flowchart TD
         subgraph DedicatedVMs ["Dedicated Virtual Machines"]
             MediaStack["🎬 VM 100: Servarr Stack<br/>Jellyfin 4K QSV + *Arr + Gluetun"]:::vm
             HA["🏠 VM 102: Home Assistant OS<br/>Smart Home Hub & Wall Tablets"]:::vm
+            WinVM["🪟 VM 115: Windows 11 Pro<br/>Q35 OVMF UEFI | swtpm | RDP"]:::vm
         end
     end
 
     TrueNAS -->|NFSv4 Mount| MediaStack
     TrueNAS -->|NFSv4 Mount| Immich
     TrueNAS -->|NFSv4 Mount| Paperless
+    TrueNAS -->|NFSv4 Storage| WinVM
     Tailscale -.->|Zero-Trust Remote Mesh| PVE
     Monitoring -.->|Scrapes Telemetry| PVE
     Monitoring -.->|Scrapes Telemetry| MediaStack
@@ -92,7 +94,8 @@ homelab-blueprints/
 │   ├── family-photo-digest/                <-- Vision AI monthly email newsletter & Immich curation
 │   ├── adguard-home/                       <-- Network-wide DoH DNS, ad-blocking & wildcard rewrites
 │   ├── nginx-proxy-manager/                <-- Reverse proxy gateway & local domain SSL termination
-│   └── trading-agents-paper/               <-- TauricResearch Multi-Agent LLM Trading Intelligence Sandbox
+│   ├── trading-agents-paper/               <-- TauricResearch Multi-Agent LLM Trading Intelligence Sandbox
+│   └── windows-11-workstation/             <-- Windows 11 Pro 26H2 unattended Q35 workstation
 ├── scripts/                                <-- Automation & security scripts
 │   ├── deploy-lxc-template.sh              <-- 1-click Proxmox LXC provisioning
 │   └── sanitize-check.sh                   <-- Pre-commit credential leak scanner
@@ -123,6 +126,7 @@ homelab-blueprints/
 | **[Nginx Proxy Manager](services/nginx-proxy-manager/)** | Reverse Proxy | Docker LXC | `80`, `443`, `81` | [Official Site](https://nginxproxymanager.com) • [Docs](https://nginxproxymanager.com/guide/) • [GitHub](https://github.com/NginxProxyManager/nginx-proxy-manager) |
 | **[TradingAgents Sandbox](services/trading-agents-paper/)** | AI & Finance | Debian LXC | `4002` (IBKR) | [Paper (arXiv:2412.20138)](https://arxiv.org/abs/2412.20138) • [GitHub](https://github.com/TauricResearch/TradingAgents) |
 | **[openGym Tracker](services/opengym/)** | Health & Fitness | Docker LXC | `8080`, `8443` (TLS) | [GitHub](https://github.com/DuarteSantos8/openGym) • [Docs](https://opengym.ch) |
+| **[Windows 11 Workstation](services/windows-11-workstation/)** | Desktop OS | KVM VM | `3389` (RDP) | [Official Site](https://www.microsoft.com/windows) • [PVE Win11 Guide](https://pve.proxmox.com/wiki/Windows_11_Guest_Best_Practices) |
 
 ---
 
