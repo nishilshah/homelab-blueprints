@@ -224,7 +224,11 @@ For a family-shared media server where users request via Jellyseerr without admi
   3. Triggers an immediate API command (`MoviesSearch` / `SeriesSearch`) to automatically grab an alternative, working release.
   4. Alerts the admin on Telegram so family requests resolve invisibly and automatically.
 
-### 6. AudiobookRequest & Audiobookshelf Hybrid Indexing Architecture
+### 6. Opportunistic Quality Upgrading & Early Theatrical Grabbing
+* **The Policy:** For movies with high demand or early pre-release theatrical hype (e.g. regional Indian cinema, early theatricals), Radarr is configured to grab any early available release (including `DVDSCR` / `TELESYNC` under the `Any` quality profile) while retaining the cutoff at `Remux-2160p` with `upgradeAllowed: true`.
+* **Global Availability Default:** Jellyseerr and Radarr are set to `minimumAvailability: announced`. This ensures that as soon as a movie is requested, Radarr starts monitoring indexers without waiting for commercial digital/streaming availability dates. Once an initial screener or early rip is imported, Radarr continually monitors RSS feeds to seamlessly swap in high-bitrate WEB-DL or 4K Remux copies as they drop.
+
+### 7. AudiobookRequest & Audiobookshelf Hybrid Indexing Architecture
 * **The Challenge:**
   - Standard AudiobookRequest queries Prowlarr using exact Audible metadata titles (e.g., `Designing Data-Intensive Applications, 2nd Edition`).
   - BitTorrent indexers frequently list releases under core titles (e.g. `Martin Kleppmann - Designing Data-Intensive Applications`) and tag releases under category `8000 (Other)` or general book categories rather than Torznab `3030 (Audiobook)`.
