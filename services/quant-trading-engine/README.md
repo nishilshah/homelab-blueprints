@@ -435,6 +435,19 @@ The automated test runner (`test_phase2_fault_injection.py`) runs 16 comprehensi
 * **Extended-Hours Stub Liquidation:**
   - Added `outside_rth` parameter to `broker_router.py` with unique client ID order naming (`IB-{clientId}-{orderId}`), ensuring fail-closed pre-trade risk checks and clean execution across both regular and extended trading sessions.
 
+### 4. Broker-Database Parity & Resilient MOC Execution Hardening
+* **Zero-Drop MOC & Fill Listener Reconnection:**
+  - Implemented `ensure_connected(self) -> bool` on `BaseBroker` and `IBKRBroker` to guarantee socket validity before submitting Market-on-Close (`MOC`) closing cross orders or polling fills.
+* **Active Broker Position Synchronization (`reqPositions`):**
+  - Updated `get_positions()` and `get_portfolio_details()` to force synchronous queries via `self.ib.reqPositions()`, eliminating stale in-memory cache drift across multi-client daemons (`clientId=1` execution vs `clientId=2` telemetry).
+* **Bidirectional Database-Broker Auto-Reconciliation:**
+  - Enhanced post-close order cleanup (`clean_stale_orders()`) and startup recovery (`_recover_pending_orders()`) to verify order fills against live broker positions.
+  - Automatically transitions `SUBMITTED` / `PENDING_SUBMIT` orders to `OPEN` once filled, and auto-imports any active broker holdings into SQLite so both systems maintain 100% single-source-of-truth parity.
+* **Audit Ledger Integration:**
+  - Integrated `trade_ledger` recording into all autonomous Pillar 1 and Pillar 2 order paths, ensuring continuous fill listener tracking and immutable tax reporting (`trade_ledger_audit.csv`).
+* **Multi-Currency Cash Power Calculation:**
+  - Evaluates multi-currency account equity for Canadian margin accounts trading US equities by converting CAD cash reserves to USD buying power (~0.72 FX conversion rate) to prevent artificial order clipping.
+
 ---
 
 ## 📈 Long-Horizon Backtest: Current Live Engine (2015 - 2026 YTD)
