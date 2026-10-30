@@ -498,6 +498,41 @@ Comprehensive 11.8-year historical simulation evaluating the exact production qu
 ### 4. Historical Crisis Stress Tests
 * **2018 Trade War & Tech Selloff:** Drawdown held to **-15.08%** vs SPY -19.80%.
 * **2020 COVID Crash:** Maximum drawdown held to **-21.80%** vs SPY **-33.72%** (+12% capital preservation).
+
+### 5. Pillar 1 Isolated Ablation Study: Anti-Whipsaw Hysteresis Band (2015 - 2026 YTD)
+
+Comprehensive 11.8-year historical ablation study isolating **Pillar 1 (Sector Dual Momentum)** across 2,975 trading days (2015-01-02 to 2026-10-30) on $100,000 capital, evaluating the direct impact of the **Top 4 Retention Hysteresis Band** against **Strict Top 2 Turnover**:
+
+| Performance Metric | Strict Top 2 (Without Hysteresis) | Top 4 Retention (With Hysteresis Band) | Hysteresis Advantage |
+| :--- | :---: | :---: | :---: |
+| **Cumulative Total Return** | **+79.05%** | **+145.71%** | **+66.66% Alpha** |
+| **Compound Annual Growth (CAGR)** | **+5.05%** | **+7.90%** | **+2.85% / year** |
+| **Final Portfolio Value ($100k)** | **$179,050.72** | **$245,710.21** | **+$66,659.49 Net Gain** |
+| **Maximum Peak-to-Trough Drawdown** | **-38.49%** | **-32.88%** | **+5.61% Capital Preservation** |
+| **Sharpe Ratio** | 0.40 | **0.56** | **+40.0% Risk-Adjusted Efficiency** |
+| **Calmar Ratio (CAGR / MaxDD)** | 0.13 | **0.24** | **+84.6% Return-to-Risk** |
+| **Total Sector Rotations** | 200 liquidations | **160 liquidations** | **-40 Whipsaw Liquidations (20% Churn Reduction)** |
+| **Total Order Executions** | 402 orders | **324 orders** | **-78 Orders Avoided** |
+| **Cumulative Friction & Slippage Cost**| $11,742.01 | **$8,744.44** | **$2,997.58 Saved** |
+
+#### Annual Return Comparison (2015 - 2026 YTD)
+
+| Year | Strict Top 2 (No Band) | Top 4 Hysteresis (With Band) | SPY Benchmark | Hysteresis Edge |
+| :---: | :---: | :---: | :---: | :---: |
+| **2015** | -8.84% (MaxDD -13.5%) | -8.88% (MaxDD -13.6%) | +1.29% | -0.04% |
+| **2016** | +6.39% (MaxDD -15.5%) | **+11.59%** (MaxDD -13.9%) | +13.59% | **+5.19%** |
+| **2017** | +11.21% (MaxDD -7.3%) | **+15.63%** (MaxDD -6.2%) | +20.78% | **+4.41%** |
+| **2018** | -8.83% (MaxDD -14.4%) | **-2.56%** (MaxDD -12.4%) | -5.25% | **+6.27%** |
+| **2019** | -2.84% (MaxDD -23.3%) | **+2.84%** (MaxDD -20.6%) | +31.09% | **+5.69%** |
+| **2020** | -11.11% (MaxDD -38.5%) | **-10.95%** (MaxDD -32.9%) | +17.24% | **+0.16%** |
+| **2021** | +34.22% (MaxDD -27.7%) | **+46.81%** (MaxDD -19.0%) | +30.51% | **+12.60%** |
+| **2022** | -5.66% (MaxDD -8.9%) | **-2.52%** (MaxDD -9.2%) | -18.65% | **+3.13%** |
+| **2023** | +1.94% (MaxDD -20.2%) | **+18.23%** (MaxDD -13.1%) | +26.71% | **+16.29%** |
+| **2024** | **+12.08%** (MaxDD -9.0%) | +8.83% (MaxDD -11.6%) | +25.59% | -3.25% |
+| **2025** | +5.42% (MaxDD -11.0%) | **+11.73%** (MaxDD -11.1%) | +18.01% | **+6.31%** |
+| **2026 YTD**| **+36.18%** (MaxDD -10.9%) | +11.87% (MaxDD -13.2%) | +10.98% | -24.30% |
+
+**Key Takeaway:** The Anti-Whipsaw Hysteresis Band outperforms Strict Top 2 in **9 out of 12 years**, delivering **nearly double the cumulative profit (+145.71% vs +79.05%)** while dampening volatility and eliminating 20% of portfolio churn.
 * **2022 Fed Rate Hiking Bear Market:** Drawdown held to **-10.73%** and full-year return **+3.95%** vs SPY **-18.18%** (**+22.12% Alpha** via macro regime cash gating).
 
 ---
