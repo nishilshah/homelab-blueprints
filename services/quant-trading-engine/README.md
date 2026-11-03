@@ -575,5 +575,6 @@ To guarantee 100% synchronization between Telegram digests and actual broker hol
 2. **Order Lifecycle Gating:** Orders placed during the 3:45 PM ET pre-close scan enter SQLite with status `SUBMITTED`. They are only promoted to `OPEN` upon confirmed broker fill.
 3. **Auto-Reconciliation of Expired Limit Orders:** If day limit orders expire unfilled at 4:00 PM close, the daily reconciliation sweeps any zero-share positions to `CANCELLED_UNFILLED` so phantom positions never appear in briefings.
 4. **Non-Blocking SQLite Concurrency:** SQLite WAL mode with 30-second busy timeout (`PRAGMA busy_timeout = 30000; PRAGMA synchronous = NORMAL;`) and immediate connection closing around broker I/O prevents transaction lock contention.
+5. **Resilient Bi-Weekly Rebalance Catch-Up:** In addition to strict target dates (1st and 15th trading sessions), `_is_pillar1_rebalance_day()` verifies whether the latest scheduled cycle target has been executed against `daemon_schedule_state`. If a target session was missed due to host maintenance, gateway stalls, or system downtime, the engine automatically detects `last_run < target_session` and triggers a catch-up rebalance on the very next active NYSE trading session at 09:45 AM ET.
 
 
