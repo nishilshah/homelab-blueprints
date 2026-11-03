@@ -100,11 +100,14 @@ The virtual machine is provisioned using an automated OEMDRV answer file (`autou
 4. **Credential Provisioning:**
    - **Local Administrator Account:** `User`
    - **Password:** *None* (Empty / Blank password as requested)
-   - **AutoLogon:** Enabled for seamless console boot
-5. **Remote Desktop (RDP) Automation:**
-   - `fDenyTSConnections` set to `0` on first logon.
+   - **AutoLogon:** Enabled for seamless console boot (`AutoAdminLogon = 1`)
+5. **Remote Desktop (RDP) Automation & OS Hardening:**
+   - `fDenyTSConnections` set to `0` on first logon to enable Terminal Services.
+   - `UserAuthentication` set to `0` (NLA disabled for blank password authentication support).
+   - `LimitBlankPasswordUse` set to `0` in `HKLM\System\CurrentControlSet\Control\Lsa` to permit local subnet blank password RDP connections.
    - Windows Firewall rule `remote desktop` group set to `enable=Yes`.
    - Unlimited password age policy enforced (`net accounts /maxpwage:unlimited`).
+   - BitLocker Device Encryption suppressed (`PreventDeviceEncryption = 1`) in `LabConfig` and registry.
 
 ---
 
