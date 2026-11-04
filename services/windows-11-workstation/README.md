@@ -120,11 +120,11 @@ https://<PVE_HOST_IP>:8006/#v1:0:=qemu%2F115
 ```
 
 ### 2. Remote Desktop Protocol (RDP)
-Connect using the native **Microsoft Remote Desktop** or **Royal TSX** on macOS:
+Connect using the official Microsoft **Windows App** (formerly Microsoft Remote Desktop) on macOS:
 * **Host:** `<VM_IP_OR_HOSTNAME>` (Port `3389`)
 * **Username:** `User`
 * **Password:** *(Leave blank)*
-* **Management Client:** **Royal TSX** (`~/Documents/RoyalTSX/Homelab.rtsz` or auto-loaded via `AutoStartFiles`) with the **Remote Desktop (FreeRDP)** plugin.
+* **Connection Profile:** `~/Documents/RDP/Windows 11 Pro.rdp` (Pre-configured with 1080p, 32-bit color, clipboard redirection, and blank-password console bypass).
 
 ---
 
