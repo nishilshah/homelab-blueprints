@@ -167,3 +167,17 @@ sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet"/GRUB_CMDLINE_LINUX_DEFAULT="quiet i
 update-grub
 ```
 *Reboot the host (`reboot`) to apply kernel parameter changes.*
+
+### 5. Hardware BIOS Auto-Power-On (Lenovo ThinkCentre Tiny)
+Ensure the hypervisor automatically powers on and boots after power cuts or when AC power is plugged in:
+```bash
+# Load Lenovo WMI firmware attributes driver
+modprobe thinklmi
+
+# Set After Power Loss to Power On (persisted into NVRAM)
+echo "Power On" > "/sys/class/firmware-attributes/thinklmi/attributes/After Power Loss/current_value"
+cat "/sys/class/firmware-attributes/thinklmi/attributes/After Power Loss/current_value"
+# Output: Power On
+```
+*(Alternative physical BIOS path: Press `F1` on boot $\rightarrow$ `Power` $\rightarrow$ `After Power Loss` $\rightarrow$ set to `Power On`).*
+
