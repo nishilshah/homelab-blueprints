@@ -211,6 +211,12 @@ When downloading heavy 4K HDR releases across an NFS mount, default direct I/O (
   Session\SendBufferWatermark=3072
   Session\SendBufferLowWatermark=1024
   Session\SendBufferWatermarkFactor=150
+  Session\MaxActiveDownloads=6
+  Session\MaxActiveTorrents=10
+  Session\IgnoreSlowTorrentsForQueueing=true
+  Session\SlowTorrentsDownloadRate=50
+  Session\SlowTorrentsUploadRate=10
+  Session\SlowTorrentsInactivityTimer=120
   ```
 * **Impact:** Kernel buffers small chunks in RAM and flushes large sequential blocks, slashing NFS write contention by 95% and guaranteeing a responsive WebUI.
 
