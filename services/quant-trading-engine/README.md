@@ -589,5 +589,6 @@ To guarantee 100% synchronization between Telegram digests and actual broker hol
      - Clean, high-density tabular breakdown for Pillar 1 (Sectors) and Pillar 2 (Mean Reversion) with color-coded P&L.
      - Live pricing via `fast_info` cross-checked against broker average fill cost (zero stale price reporting).
      - Interactive inline keyboard: `[ 🔄 Refresh Quotes ]`, `[ ⚡ Force Exit Overdue ]`, `[ 🏛️ Rebalance P1 ]`, and `[ 📊 System Status ]` enabling real-time operations directly from Telegram.
+     - **Mandatory 2-Step Confirmation Protocol:** Capital-affecting actions (`Force Exit Overdue` and `P1 Rebalance`) strictly enforce an interactive two-step verification prompt (`[ ✅ Confirm ]` / `[ ❌ Cancel ]`) before any orders or scans are dispatched to IB Gateway.
 
 
