@@ -576,5 +576,18 @@ To guarantee 100% synchronization between Telegram digests and actual broker hol
 3. **Auto-Reconciliation of Expired Limit Orders:** If day limit orders expire unfilled at 4:00 PM close, the daily reconciliation sweeps any zero-share positions to `CANCELLED_UNFILLED` so phantom positions never appear in briefings.
 4. **Non-Blocking SQLite Concurrency:** SQLite WAL mode with 30-second busy timeout (`PRAGMA busy_timeout = 30000; PRAGMA synchronous = NORMAL;`) and immediate connection closing around broker I/O prevents transaction lock contention.
 5. **Resilient Bi-Weekly Rebalance Catch-Up:** In addition to strict target dates (1st and 15th trading sessions), `_is_pillar1_rebalance_day()` verifies whether the latest scheduled cycle target has been executed against `daemon_schedule_state`. If a target session was missed due to host maintenance, gateway stalls, or system downtime, the engine automatically detects `last_run < target_session` and triggers a catch-up rebalance on the very next active NYSE trading session at 09:45 AM ET.
+6. **MOC Order Support & Schema Hardening:**
+   - Database schema migrated to support `MOC` (Market-on-Close) orders in `trade_ledger`: `CHECK (order_type IN ('MKT', 'LMT', 'STP', 'STP_LMT', 'MOC'))`.
+   - All transaction writes (`_record_order_in_ledger`) wrapped in strict `try...finally: conn.close()` to guarantee zero leaked database write locks on unexpected constraint errors.
+7. **Active Keep-Alive & Auto-Recovery Broker Sockets:**
+   - Broker router implements active socket liveness checking (`is_alive()`) and auto-recovery reconnection logic for MOC and Limit orders (2-phase retry on broken pipes).
+   - Asynchronous non-blocking account streaming via `reqAccountUpdatesAsync(account)` prevents portfolio cache staleness across long-running daemon lifecycles.
+8. **Institutional Telegram Digest & Interactive Action Keyboards:**
+   - Overhauled daily digests with institutional "Above the Fold" hierarchy:
+     - Hero metrics banner (Net Equity, Settled USD/CAD Cash, Invested %, Unrealized P&L).
+     - Prominent **🚨 ACTION REQUIRED** alert block at the top highlighting overdue positions (held ≥10d) or 5-SMA snapback triggers.
+     - Clean, high-density tabular breakdown for Pillar 1 (Sectors) and Pillar 2 (Mean Reversion) with color-coded P&L.
+     - Live pricing via `fast_info` cross-checked against broker average fill cost (zero stale price reporting).
+     - Interactive inline keyboard: `[ 🔄 Refresh Quotes ]`, `[ ⚡ Force Exit Overdue ]`, `[ 🏛️ Rebalance P1 ]`, and `[ 📊 System Status ]` enabling real-time operations directly from Telegram.
 
 
