@@ -399,10 +399,11 @@ flowchart TD
 
 ### 1. Architectural Safeguards Deployed (Phase 1)
 * **Pre-Trade Risk Firewall (`risk_engine.py`):**
-  - **Single-Order Notional Ceiling:** Hard cap of \$15,000 USD per trade.
+  - **Single-Order Notional Ceiling:** Hard cap of \$15,000 USD (+5% buffer for share rounding) strictly enforced on **BUY orders** to prevent over-allocation.
+  - **Liquidation Exemption for Exits:** Full position liquidations on **SELL orders** are exempt from the buy cap (governed by the short-selling prevention check `held >= qty`), ensuring large rebalance positions can exit completely without being blocked.
   - **Price Deviation Collar:** Orders deviating > 5% from previous close are automatically rejected to guard against bad data or fat-finger ticks.
   - **Kill-Switch Guard:** Reads `system_state.kill_switch_active` before any order dispatch.
-  - **Short-Selling Prevention:** Strictly validates broker position availability before submitting SELL limit orders.
+  - **Short-Selling Prevention:** Strictly validates broker position availability before submitting SELL orders.
 * **Fail-Closed Order Router (`broker_router.py`):**
   - Silent simulation fallback is permanently disabled (`simulation_fallback=False`).
   - Network timeouts or gateway drops raise explicit `BrokerConnectionError` or `BrokerExecutionError`, preventing phantom order execution.
@@ -436,8 +437,9 @@ The automated test runner (`test_phase2_fault_injection.py`) runs 16 comprehensi
   - Added `outside_rth` parameter to `broker_router.py` with unique client ID order naming (`IB-{clientId}-{orderId}`), ensuring fail-closed pre-trade risk checks and clean execution across both regular and extended trading sessions.
 
 ### 4. Broker-Database Parity & Resilient MOC Execution Hardening
-* **Zero-Drop MOC & Fill Listener Reconnection:**
+* **Zero-Drop MOC & Paper Trading Emulation (`broker_router.py`):**
   - Implemented `ensure_connected(self) -> bool` on `BaseBroker` and `IBKRBroker` to guarantee socket validity before submitting Market-on-Close (`MOC`) closing cross orders or polling fills.
+  - **Paper Trading MOC Emulation:** Interactive Brokers Paper Trading simulated exchange does not replicate physical closing auction crosses, causing native MOC orders to drop or expire unfilled. Added automatic environment detection: in Paper Trading mode (`port=4002`, `DUR*` accounts), MOC exits automatically route as marketable Limit orders (with protective price collar) or Market orders, guaranteeing immediate fills. In Live mode, orders route to the official NYSE/NASDAQ closing cross auction.
 * **Active Broker Position Synchronization (`reqPositions`):**
   - Updated `get_positions()` and `get_portfolio_details()` to force synchronous queries via `self.ib.reqPositions()`, eliminating stale in-memory cache drift across multi-client daemons (`clientId=1` execution vs `clientId=2` telemetry).
 * **Bidirectional Database-Broker Auto-Reconciliation:**
