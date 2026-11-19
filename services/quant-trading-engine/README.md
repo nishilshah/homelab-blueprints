@@ -401,7 +401,7 @@ flowchart TD
 * **Pre-Trade Risk Firewall (`risk_engine.py`):**
   - **Single-Order Notional Ceiling:** Hard cap of \$15,000 USD (+5% buffer for share rounding) strictly enforced on **BUY orders** to prevent over-allocation.
   - **Liquidation Exemption for Exits:** Full position liquidations on **SELL orders** are exempt from the buy cap (governed by the short-selling prevention check `held >= qty`), ensuring large rebalance positions can exit completely without being blocked.
-  - **Price Deviation Collar:** Orders deviating > 5% from previous close are automatically rejected to guard against bad data or fat-finger ticks.
+  - **Asymmetric Price Deviation Collar:** Orders on **BUY** deviating > 5% from previous close are rejected to prevent chasing runaway spikes. For **SELL** orders, the collar is relaxed to 15% to guarantee that steep market sell-offs and stop-loss drops (e.g. single-day drops > 5%) can exit cleanly without being blocked by the firewall.
   - **Kill-Switch Guard:** Reads `system_state.kill_switch_active` before any order dispatch.
   - **Short-Selling Prevention:** Strictly validates broker position availability before submitting SELL orders.
 * **Fail-Closed Order Router (`broker_router.py`):**
@@ -438,13 +438,13 @@ The automated test runner (`test_phase2_fault_injection.py`) runs 16 comprehensi
 
 ### 4. Broker-Database Parity & Resilient MOC Execution Hardening
 * **Zero-Drop MOC & Paper Trading Emulation (`broker_router.py`):**
-  - Implemented `ensure_connected(self) -> bool` on `BaseBroker` and `IBKRBroker` to guarantee socket validity before submitting Market-on-Close (`MOC`) closing cross orders or polling fills.
+  - Implemented `ensure_connected(self) -> bool` on `BaseBroker` and `IBKRBroker` with active server heartbeat ping (`reqCurrentTime()`) to detect zombie sockets and cleanly reconnect after nightly gateway restarts.
   - **Paper Trading MOC Emulation:** Interactive Brokers Paper Trading simulated exchange does not replicate physical closing auction crosses, causing native MOC orders to drop or expire unfilled. Added automatic environment detection: in Paper Trading mode (`port=4002`, `DUR*` accounts), MOC exits automatically route as marketable Limit orders (with protective price collar) or Market orders, guaranteeing immediate fills. In Live mode, orders route to the official NYSE/NASDAQ closing cross auction.
-* **Active Broker Position Synchronization (`reqPositions`):**
-  - Updated `get_positions()` and `get_portfolio_details()` to force synchronous queries via `self.ib.reqPositions()`, eliminating stale in-memory cache drift across multi-client daemons (`clientId=1` execution vs `clientId=2` telemetry).
+* **Synchronous Live Position Synchronization (`reqPositions`):**
+  - Updated `get_positions()` to force synchronous queries via `self.ib.reqPositions()`, eliminating in-memory `ib.positions()` cache drift where filled exit orders remained reported as held.
 * **Bidirectional Database-Broker Auto-Reconciliation:**
   - Enhanced post-close order cleanup (`clean_stale_orders()`) and startup recovery (`_recover_pending_orders()`) to verify order fills against live broker positions.
-  - Automatically transitions `SUBMITTED` / `PENDING_SUBMIT` orders to `OPEN` once filled, and auto-imports any active broker holdings into SQLite so both systems maintain 100% single-source-of-truth parity.
+  - Automatically transitions `SUBMITTED` / `PENDING_SUBMIT` orders to `OPEN` once filled, auto-imports any active broker holdings into SQLite, and automatically closes any SQLite `OPEN` record if the broker holds 0 shares so both systems maintain 100% single-source-of-truth parity.
 * **Audit Ledger Integration:**
   - Integrated `trade_ledger` recording into all autonomous Pillar 1 and Pillar 2 order paths, ensuring continuous fill listener tracking and immutable tax reporting (`trade_ledger_audit.csv`).
 * **Multi-Currency Cash Power Calculation:**
