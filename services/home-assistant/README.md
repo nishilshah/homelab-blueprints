@@ -1,12 +1,14 @@
-# 🏠 Home Assistant OS Smart Home Hub (VM 102)
+# 🏠 Home Assistant OS Smart Home Hub (VM 105)
 
 [![Home Assistant](https://img.shields.io/badge/Home_Assistant-OS_2024+-41BDF5?style=for-the-badge&logo=homeassistant&logoColor=white)](https://www.home-assistant.io)
 [![KVM](https://img.shields.io/badge/KVM-Virtual_Machine-FF6600?style=for-the-badge&logo=redhat&logoColor=white)](https://www.linux-kvm.org)
+[![Matter](https://img.shields.io/badge/Matter-Standard-000000?style=for-the-badge&logo=matter&logoColor=white)](https://csa-iot.org/all-solutions/matter/)
+[![Thread](https://img.shields.io/badge/Thread-IPv6_Mesh-14B8A6?style=for-the-badge&logo=thread&logoColor=white)](https://www.threadgroup.org)
 [![Zigbee](https://img.shields.io/badge/Zigbee-Zigbee2MQTT-EB144C?style=for-the-badge&logo=zigbee&logoColor=white)](https://www.zigbee2mqtt.io)
 [![MQTT](https://img.shields.io/badge/MQTT-Mosquitto-660066?style=for-the-badge&logo=eclipsemosquitto&logoColor=white)](https://mosquitto.org)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=for-the-badge)](https://www.apache.org/licenses/LICENSE-2.0)
 
-A dedicated, local-first smart home automation hub running **Home Assistant Operating System (HAOS)** inside a KVM virtual machine on Proxmox VE. Orchestrates lighting, climate, multi-room audio, presence detection, energy monitoring, and wall-mounted tablet dashboards with zero cloud dependencies.
+A dedicated, local-first smart home automation hub running **Home Assistant Operating System (HAOS)** inside a KVM virtual machine on Proxmox VE. Orchestrates lighting, climate, multi-room audio, presence detection, energy monitoring, Matter-over-Thread mesh ecosystems, and wall-mounted tablet dashboards with zero cloud dependencies.
 
 ---
 
@@ -34,10 +36,12 @@ flowchart TD
     subgraph PhysicalPeripherals ["1. Physical Peripherals & IoT Devices"]
         ZigbeeUSB["🔌 Sonoff Zigbee 3.0 USB Dongle Plus<br/>Silicon Labs EFR32MG21 / CC2652P"]:::iot
         Sensors["📡 Zigbee Motion, Door & Temp Sensors"]:::iot
-        Plugs["⚡ Matter / Thread & ESPHome Smart Plugs"]:::iot
+        ThreadBR["🌐 Thread Border Router<br/>IKEA DIRIGERA Hub (mDNS _meshcop._udp)"]:::iot
+        ThreadNodes["⚡ Matter-over-Thread Endpoints<br/>IPv6 ULA Mesh (fd48:855e:2135:1::/64)"]:::iot
         Lights["💡 Local Philips Hue & Lutron Bridges"]:::iot
         
         ZigbeeUSB --- Sensors
+        ThreadNodes --- ThreadBR
     end
 
     subgraph HostHypervisor ["2. Proxmox VE Host - Bare Metal"]
@@ -45,7 +49,7 @@ flowchart TD
         ZigbeeUSB --> USBPass
     end
 
-    subgraph HAOS_VM ["3. Home Assistant OS (VM 102 - Port 8123)"]
+    subgraph HAOS_VM ["3. Home Assistant OS (VM 105 - Port 8123)"]
         CoreEngine["🏠 HA Core Event Bus & State Machine"]:::haos
         Supervisor["🛡️ HA Supervisor & Add-on Engine"]:::haos
         
@@ -53,13 +57,14 @@ flowchart TD
             Z2M["📡 Zigbee2MQTT Add-on"]:::haos
             MQTT["📬 Eclipse Mosquitto MQTT Broker"]:::haos
             ESPHome["⚡ ESPHome Dashboard"]:::haos
+            Matter["🌐 Matter Server Add-on<br/>core_matter_server (Port 5580)"]:::haos
         end
         
         USBPass --> Z2M
         Z2M --> MQTT
         MQTT --> CoreEngine
-        Plugs --> ESPHome
-        ESPHome --> CoreEngine
+        Matter <-->|Local WebSocket ws://127.0.0.1:5580| CoreEngine
+        ThreadBR -.->|mDNS & IPv6 OMR Route| CoreEngine
         Lights --> CoreEngine
         Supervisor --- CoreEngine
     end
@@ -112,8 +117,30 @@ While Home Assistant can run as a standalone Docker container (`homeassistant/ho
 | **vCPUs** | 2 Cores (`host` type) | Sufficient for hundreds of entities and event bus processing |
 | **Memory** | 4096 MB (4 GB) | Headroom for SQLite recorder database and add-on containers |
 | **Boot Disk** | 32 GB SSD (`local-lvm`) | High-endurance SSD for entity state history and long-term statistics |
-| **Network** | `vmbr0` (Static IP: `192.168.1.240`) | Attached to default bridge for mDNS and SSDP device discovery |
+| **Network** | `vmbr0` (Static IP: `<HOME_ASSISTANT_IP>`) | Attached to default bridge with IPv6 SLAAC & Thread OMR routing |
 | **USB Passthrough** | Vendor/Device ID Passthrough | Passes Sonoff Zigbee USB 3.0 coordinator directly into VM |
+
+---
+
+## 🌐 Matter & Thread Architecture (Matter-over-Thread)
+
+The smart home cluster supports local-first **Matter-over-Thread** device commissioning and execution via a hybrid architecture:
+
+### 1. Official Matter Server Add-on (`core_matter_server`)
+- **Engine:** Native `matter-server` (matter.js runtime) running in host networking mode.
+- **Port:** Exposes TCP `5580` for local WebSocket management.
+- **Lifecycle Management:** Configured with `boot: auto` for automatic startup on host boot and `watchdog: true` for automatic Supervisor health monitoring and restarts.
+- **Access Control:** Integrated into HA Supervisor API and Ingress.
+
+### 2. Native Home Assistant Matter Integration
+- **Connection:** Direct internal WebSocket client link (`ws://127.0.0.1:5580` / `ws://core-matter-server:5580`).
+- **State Machine:** Automatically maps Matter clusters (on/off, level control, color, illuminance, temperature, occupancy) to native Home Assistant entity platforms.
+- **Local Commissioning:** Supports BLE commissioning proxying and IP-based commissioning for discovered Thread/Wi-Fi Matter devices.
+
+### 3. IPv6 Dual-Stack & Thread Border Router Discovery
+- **Host IPv6:** Virtual interface `enp6s18` operates dual-stack with Global SLAAC IPv6 (`2001:.../64`) and Link-Local IPv6 (`fe80::/64`).
+- **Border Router Discovery:** Listens on mDNS for `_meshcop._udp.local.` service announcements. Automatically identifies local Thread Border Routers (such as IKEA DIRIGERA Hub).
+- **Off-Mesh Routable (OMR) Routing:** Static route for the Thread Unique Local Address (ULA) subnet (`fd48:855e:2135:1::/64`) via the Border Router link-local IPv6 address (`fe80::...`) persisted in NetworkManager (`Supervisor enp6s18`) to ensure direct IP routability to sleeping end devices (SEDs).
 
 ---
 
@@ -129,7 +156,7 @@ unxz haos_ova-12.4.qcow2.xz
 
 ### 2. Provision Virtual Machine on Proxmox VE
 ```bash
-qm create 102 \
+qm create 105 \
   --name home-assistant \
   --memory 4096 \
   --cores 2 \
@@ -142,11 +169,11 @@ qm create 102 \
   --onboot 1
 
 # Import the disk image
-qm importdisk 102 haos_ova-12.4.qcow2 local-lvm
+qm importdisk 105 haos_ova-12.4.qcow2 local-lvm
 
 # Attach imported disk as SCSI 0
-qm set 102 --scsihw virtio-scsi-single --scsi0 local-lvm:vm-102-disk-1,discard=on,ssd=1
-qm set 102 --boot order=scsi0
+qm set 105 --scsihw virtio-scsi-single --scsi0 local-lvm:vm-105-disk-1,discard=on,ssd=1
+qm set 105 --boot order=scsi0
 ```
 
 ### 3. Passthrough USB Zigbee Coordinator
@@ -155,18 +182,19 @@ Identify your USB coordinator device on the Proxmox host:
 lsusb
 # Example: Bus 001 Device 004: ID 10c4:ea60 Silicon Labs CP210x UART Bridge
 
-# Attach USB device to VM 102:
-qm set 102 -usb0 host=10c4:ea60
+# Attach USB device to VM 105:
+qm set 105 -usb0 host=10c4:ea60
 
 # Start VM
-qm start 102
+qm start 105
 ```
 
 ### 4. Complete Onboarding
-1. Navigate to `http://192.168.1.72:8123` in your browser.
+1. Navigate to `http://<HOME_ASSISTANT_IP>:8123` in your browser.
 2. Follow the onboarding wizard to create the primary home administrator account.
-3. Install the **Mosquitto MQTT** and **Zigbee2MQTT** add-ons from the Add-on Store.
-4. Begin pairing sensors and configuring local automations!
+3. Install the **Mosquitto MQTT**, **Zigbee2MQTT**, and **Matter Server** add-ons from the Add-on Store.
+4. Enable the **Matter** and **Thread** integrations.
+5. Begin pairing sensors and commissioning Matter-over-Thread devices!
 
 ---
 

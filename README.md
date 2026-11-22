@@ -40,7 +40,7 @@ flowchart TD
 
         subgraph NetworkAccess ["Zero-Trust & Telemetry"]
             Tailscale["🛡️ LXC 103: Tailscale Gateway<br/>Subnet Router & Exit Node"]:::net
-            Monitoring["📊 LXC 105: Prometheus & Grafana<br/>Full Cluster Telemetry"]:::net
+            Monitoring["📊 LXC 104: Prometheus & Grafana<br/>Full Cluster Telemetry"]:::net
         end
 
         subgraph CoreLXCs ["Debian 12 Application Microservices"]
@@ -55,7 +55,7 @@ flowchart TD
 
         subgraph DedicatedVMs ["Dedicated Virtual Machines"]
             MediaStack["🎬 VM 100: Servarr Stack<br/>Jellyfin 4K QSV + *Arr + Gluetun"]:::vm
-            HA["🏠 VM 102: Home Assistant OS<br/>Smart Home Hub & Wall Tablets"]:::vm
+            HA["🏠 VM 105: Home Assistant OS<br/>Smart Home Hub & Wall Tablets"]:::vm
             WinVM["🪟 VM 115: Windows 11 Pro<br/>Q35 OVMF UEFI | swtpm | RDP"]:::vm
         end
     end
@@ -120,7 +120,7 @@ homelab-blueprints/
 | **[Tailscale Gateway](services/tailscale-gateway/)** | Networking | Debian LXC | — | [Official Site](https://tailscale.com) • [Subnet Guide](https://tailscale.com/kb/1019/subnets) • [Admin](https://login.tailscale.com/admin) |
 | **[Prometheus & Grafana](services/monitoring-prometheus-grafana/)** | Monitoring | Debian LXC | `3000`, `9090` | [Prometheus](https://prometheus.io) • [Grafana](https://grafana.com) • [Dashboards](https://grafana.com/grafana/dashboards) |
 | **[Quant Trading Engine](services/quant-trading-engine/)** | Finance | Debian LXC | `8080`, `4002` | [OpenBB](https://openbb.co) • [IBKR API](https://interactivebrokers.github.io) • [ib_insync](https://github.com/erdewit/ib_insync) |
-| **[Home Assistant](services/home-assistant/)** | Smart Home | KVM VM | `8123` | [Official Site](https://www.home-assistant.io) • [HACS](https://hacs.xyz) • [Fully Kiosk](https://www.fully-kiosk.com) |
+| **[Home Assistant](services/home-assistant/)** | Smart Home | KVM VM | `8123`, `5580` | [Official Site](https://www.home-assistant.io) • [HACS](https://hacs.xyz) • [Fully Kiosk](https://www.fully-kiosk.com) |
 | **[Family Photo Digest](services/family-photo-digest/)** | AI & Family | Debian LXC | — | [Google Gemini](https://ai.google.dev) • [Immich](https://immich.app) • [Telegram Bot](https://core.telegram.org/bots) |
 | **[AdGuard Home](services/adguard-home/)** | Network & DNS | Debian LXC | `53`, `80` | [Official Site](https://adguard.com/adguard-home.html) • [GitHub](https://github.com/AdguardTeam/AdGuardHome) • [Wiki](https://github.com/AdguardTeam/AdGuardHome/wiki) |
 | **[Nginx Proxy Manager](services/nginx-proxy-manager/)** | Reverse Proxy | Docker LXC | `80`, `443`, `81` | [Official Site](https://nginxproxymanager.com) • [Docs](https://nginxproxymanager.com/guide/) • [GitHub](https://github.com/NginxProxyManager/nginx-proxy-manager) |
